@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cozy Chores</title>
+<meta name="theme-color" content="#241a14">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cozy Chores">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#241a14; --card:#33251c; --ink:#f5e6d0; --muted:#bfa58a; --line:#47352a;
+  --accent:#e8913a; --accent-ink:#2a1a10; --soft:#3f2e23;
+  --r1:#e8913a; --r2:#e6c063; --r3:#c95f44;
+  --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+  --round: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+body[data-season="winter"]{ --bg:#1b2129; --card:#262e38; --ink:#eef1f5; --muted:#a5b0bf; --line:#36404d; --accent:#e0a45c; --accent-ink:#1f1610; --soft:#2f3844; --r1:#e0a45c; --r2:#d06a5f; --r3:#8fb3d9; }
+body[data-season="spring"]{ --bg:#1f241d; --card:#2b3228; --ink:#f1f0e4; --muted:#b1b7a1; --line:#3b4436; --accent:#e79ab0; --accent-ink:#2a1a20; --soft:#343c30; --r1:#e79ab0; --r2:#a6cf86; --r3:#b8a6e3; }
+body[data-season="summer"]{ --bg:#1d1f2b; --card:#292c3b; --ink:#f7efe0; --muted:#b8b0a3; --line:#3a3d50; --accent:#f0aa4c; --accent-ink:#2a1a0c; --soft:#333647; --r1:#f0aa4c; --r2:#5fc0c0; --r3:#ee7c66; }
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{
+  background:var(--bg); background-image:radial-gradient(120% 50% at 50% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%); background-attachment:fixed; color:var(--ink); font-family:var(--round);
+  font-size:16px; line-height:1.4; transition:background .6s;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit}
+.wrap{max-width:520px;margin:0 auto;padding:12px 16px 120px}
+
+/* header */
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:8px 2px 14px}
+.hello{font-family:var(--serif);font-size:26px;font-weight:600;margin:2px 0 0;letter-spacing:-.01em}
+.season-line{font-size:14px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.icon-btn{border:0;background:var(--card);width:42px;height:42px;border-radius:50%;display:grid;place-items:center;box-shadow:0 2px 10px rgba(0,0,0,.3);cursor:pointer;flex:none}
+.icon-btn svg{width:20px;height:20px}
+
+/* view toggle */
+.toggle{display:flex;background:var(--soft);border-radius:999px;padding:4px;margin-bottom:12px}
+.toggle button{flex:1;border:0;background:transparent;padding:8px 0;border-radius:999px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;transition:background .25s,color .25s}
+.toggle button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 6px rgba(0,0,0,.35)}
+
+.card{background:var(--card);border-radius:22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 30px rgba(0,0,0,.35);overflow:hidden}
+.hero{margin-bottom:22px}
+#scene svg{display:block;width:100%;height:auto}
+.hero-foot{padding:12px 16px 14px}
+.hero-foot .row1{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:14px}
+.hero-foot .pts{font-weight:700}
+.hero-foot .next{color:var(--muted);font-size:13px;margin-top:6px}
+.bar{height:8px;background:var(--soft);border-radius:99px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+
+/* stats */
+#stats{padding:16px}
+.rings{display:flex;align-items:center;gap:16px}
+.rings svg{width:150px;height:150px;flex:none}
+.ring-bg{opacity:.17}
+.ring-fg{transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1)}
+.legend{display:grid;gap:10px;flex:1;min-width:0}
+.legend div{display:flex;align-items:center;gap:8px;font-size:14px}
+.legend .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.legend b{font-size:20px;font-variant-numeric:tabular-nums;margin-left:auto}
+.legend small{color:var(--muted);display:block;font-size:12px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.tile{background:var(--soft);border-radius:14px;padding:10px}
+.tile b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.tile span{font-size:11.5px;color:var(--muted);line-height:1.2;display:block}
+.hist{margin-top:16px}
+.hist h3{font-size:13px;color:var(--muted);font-weight:600;margin:0 0 8px}
+.hist .bars{display:flex;align-items:flex-end;gap:4px;height:64px}
+.hist .bars div{flex:1;background:var(--soft);border-radius:5px;position:relative;height:100%;overflow:hidden}
+.hist .bars div i{position:absolute;left:0;right:0;bottom:0;background:var(--r1);border-radius:5px}
+.hist .bars div.today{outline:2px solid var(--r1);outline-offset:1px}
+.hist .lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}
+
+/* chore lists */
+.group{margin-bottom:22px}
+.ghead{display:flex;align-items:baseline;justify-content:space-between;padding:0 4px 8px}
+.ghead h2{font-family:var(--serif);font-size:20px;margin:0;font-weight:600}
+.chip{font-size:12.5px;font-weight:700;color:var(--muted);background:var(--soft);padding:3px 10px;border-radius:99px;font-variant-numeric:tabular-nums}
+.chip.full{background:var(--accent);color:var(--accent-ink)}
+ul.list{list-style:none;margin:0;padding:0}
+.row{display:flex;align-items:center;gap:12px;padding:10px 6px 10px 14px;cursor:pointer;user-select:none;-webkit-user-select:none;transition:background .2s}
+.row + .row{border-top:1px solid var(--line)}
+.row:active{background:var(--soft)}
+.check{color:var(--accent-ink);width:30px;height:30px;border-radius:50%;border:2.5px solid var(--line);flex:none;display:grid;place-items:center;transition:background .25s,border-color .25s,transform .25s;background:transparent}
+.check svg{width:16px;height:16px;opacity:0;transform:scale(.5);transition:opacity .2s,transform .25s cubic-bezier(.3,1.6,.5,1)}
+.row.done .check{background:var(--accent);border-color:var(--accent)}
+.row.done .check svg{opacity:1;transform:none}
+.row.partial .check{border-color:var(--accent);border-style:dashed}
+.row.done .name{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 50%,transparent)}
+.info{flex:1;min-width:0}
+.name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.name .em{margin-right:6px}
+.sub{font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.pips{display:inline-flex;gap:3px}
+.pips i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.pips i.on{background:var(--accent)}
+.more{border:0;background:transparent;width:38px;height:38px;border-radius:50%;color:var(--muted);cursor:pointer;flex:none;display:grid;place-items:center}
+.more:active{background:var(--soft)}
+.more svg{width:20px;height:20px}
+.age-fresh{color:var(--r2)}
+.empty{text-align:center;padding:30px 20px;color:var(--muted)}
+
+.fab{position:fixed;right:max(18px,calc(50% - 242px));bottom:calc(22px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);box-shadow:0 8px 24px rgba(0,0,0,.45),0 0 24px color-mix(in srgb, var(--accent) 35%, transparent);cursor:pointer;display:grid;place-items:center;z-index:5}
+.fab svg{width:26px;height:26px}
+
+/* sheets */
+.sheet-wrap{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet-wrap[hidden]{display:none}
+.backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);animation:fade .2s}
+.sheet{position:relative;background:var(--card);width:100%;max-width:520px;border-radius:24px 24px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto;animation:up .28s cubic-bezier(.2,.8,.2,1)}
+.grip{width:40px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 12px}
+.sheet h2{font-family:var(--serif);margin:0 0 14px;font-size:22px}
+.field{margin-bottom:16px}
+.field > label,.field > .lbl{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.field input[type=text],.field input[type=date]{width:100%;font:inherit;font-size:17px;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);outline:none}
+.field input:focus{border-color:var(--accent)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1.5px solid var(--line);background:var(--bg);padding:8px 14px;border-radius:99px;font-size:14px;font-weight:600;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.emojis{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:6px}
+.emojis button{border:1.5px solid var(--line);background:var(--bg);height:42px;border-radius:12px;font-size:20px;cursor:pointer;padding:0}
+.emojis button[aria-pressed="true"]{border-color:var(--accent);background:var(--soft)}
+.stepper{display:flex;align-items:center;gap:14px}
+.stepper button{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--line);background:var(--bg);font-size:20px;cursor:pointer}
+.stepper output{font-size:20px;font-weight:700;min-width:22px;text-align:center}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+.actions{display:flex;gap:10px;margin-top:6px}
+.btn{flex:1;border:0;border-radius:16px;padding:14px;font-weight:700;font-size:16px;cursor:pointer;background:var(--soft)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.danger{background:transparent;color:#ec8a7a;flex:none;padding:14px 10px}
+.set-row{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.set-row .btn{flex:none;text-align:left}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--card);padding:11px 14px 11px 18px;border-radius:16px;display:flex;align-items:center;gap:14px;font-size:14.5px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{border:0;background:transparent;color:inherit;font-weight:800;text-decoration:underline;cursor:pointer;padding:4px}
+
+@keyframes fade{from{opacity:0}}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+
+/* scene animation */
+.item{opacity:0;transform:scale(.5);transform-box:fill-box;transform-origin:50% 100%;transition:opacity .5s,transform .5s cubic-bezier(.3,1.5,.5,1)}
+.item.on{opacity:1;transform:none}
+.item.pop{animation:pop .9s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(.3)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+.p{animation:drift var(--d) linear infinite;animation-delay:var(--dl);transform-box:fill-box;transform-origin:center}
+@keyframes drift{0%{transform:translate(0,0) rotate(0)}50%{transform:translate(14px,140px) rotate(200deg)}100%{transform:translate(-6px,290px) rotate(380deg)}}
+.ff{animation:wander var(--d) ease-in-out infinite;animation-delay:var(--dl)}
+@keyframes wander{0%,100%{transform:translate(0,0);opacity:.15}25%{transform:translate(10px,-8px);opacity:1}50%{transform:translate(18px,4px);opacity:.35}75%{transform:translate(6px,10px);opacity:1}}
+.shimmer{animation:shimmer 5s ease-in-out infinite}
+@keyframes shimmer{0%,100%{transform:translateX(0);opacity:.08}50%{transform:translateX(6px);opacity:.45}}
+.p.up{animation-name:rise}
+@keyframes rise{0%{transform:translate(0,0);opacity:0}15%{opacity:1}100%{transform:translate(14px,-105px);opacity:0}}
+.flame{transform-box:fill-box;transform-origin:50% 100%;animation:flick 1.6s ease-in-out infinite}
+@keyframes flick{0%,100%{transform:scale(1,1)}50%{transform:scale(.88,1.1) rotate(2deg)}}
+.steam{animation:steam 3s ease-in-out infinite;opacity:0}
+@keyframes steam{0%{opacity:0;transform:translateY(3px)}40%{opacity:.7}100%{opacity:0;transform:translateY(-6px)}}
+.breathe{transform-box:fill-box;transform-origin:50% 100%;animation:breathe 3.6s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.025,1.06)}}
+.twinkle{animation:twinkle 2.4s ease-in-out infinite}
+@keyframes twinkle{50%{opacity:.35}}
+.zz{animation:zz 4s ease-in-out infinite;opacity:0}
+@keyframes zz{0%{opacity:0;transform:translate(0,0)}30%{opacity:.8}100%{opacity:0;transform:translate(6px,-14px)}}
+#glow{transition:opacity 1s}
+@media (prefers-reduced-motion: reduce){
+  .p,.ff,.shimmer,.flame,.steam,.breathe,.twinkle,.zz,.item.pop{animation:none}
+  .steam,.zz{opacity:.5}
+}
+</style>
+</head>
+<body data-season="fall">
+<div class="wrap">
+  <header>
+    <div>
+      <div class="season-line" id="seasonLine"></div>
+      <h1 class="hello" id="hello">Hello</h1>
+    </div>
+    <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
+    </button>
+  </header>
+
+  <div class="toggle" role="group" aria-label="View">
+    <button id="vCozy" aria-pressed="true">Cozy</button>
+    <button id="vStats" aria-pressed="false">Stats</button>
+  </div>
+
+  <section class="card hero">
+    <div id="cozyView">
+      <div id="scene"></div>
+      <div class="hero-foot">
+        <div class="row1"><span id="todayLine"></span><span class="pts" id="ptsLine"></span></div>
+        <div class="bar"><i id="nextBar"></i></div>
+        <div class="next" id="nextLine"></div>
+      </div>
+    </div>
+    <div id="stats" hidden></div>
+  </section>
+
+  <main id="lists"></main>
+</div>
+
+<button class="fab" id="addBtn" aria-label="Add a chore">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<div class="sheet-wrap" id="sheetWrap" hidden>
+  <div class="backdrop" id="backdrop"></div>
+  <div class="sheet" role="dialog" aria-modal="true" id="sheet"></div>
+</div>
+
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="toastUndo" hidden>Undo</button></div>
+
+<script>
+'use strict';
+const KEY = 'cozychores.v1';
+const DAY = 864e5;
+const PTS = {daily:5, weekly:15, monthly:30, loose:20};
+const FREQS = ['daily','weekly','monthly','loose'];
+const FREQ_LABEL = {daily:'Daily', weekly:'Weekly', monthly:'Monthly', loose:'Now & then'};
+const GROUP_TITLE = {daily:'Today', weekly:'This week', monthly:'This month', loose:'Now & then'};
+const PERIOD_WORD = {daily:'today', weekly:'this week', monthly:'this month'};
+const THRESH = [10, 40, 90, 160, 250, 360, 500, 660, 850, 1100];
+const SLOTS = ['pumpkins','mugs','rug','logs','mantel','blanket','lanterns','cat','flowers','lights'];
+const EMOJIS = ['🛏️','🍽️','🧺','🧹','🧽','🗑️','🪴','🐾','🚿','🧼','🛒','🍳','🪟','🌿','📦','✨','🧊','🌸','🚗','💡'];
+
+/* ---------- dates ---------- */
+const sod = d => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+function sow(d){ const x = sod(d); const diff = (x.getDay() - state.settings.weekStart + 7) % 7; return addDays(x, -diff); }
+function range(freq, d = new Date()){
+  if (freq === 'weekly'){ const a = sow(d); return [a.getTime(), addDays(a,7).getTime()]; }
+  if (freq === 'monthly'){ return [new Date(d.getFullYear(), d.getMonth(), 1).getTime(), new Date(d.getFullYear(), d.getMonth()+1, 1).getTime()]; }
+  const a = sod(d); return [a.getTime(), addDays(a,1).getTime()];
+}
+function seasonOf(d){ const m = d.getMonth(); return m===11||m<2 ? 'winter' : m<5 ? 'spring' : m<8 ? 'summer' : 'fall'; }
+function seasonStart(d){
+  const y = d.getFullYear(), m = d.getMonth();
+  if (m === 11) return new Date(y,11,1);
+  if (m < 2) return new Date(y-1,11,1);
+  return new Date(y, m<5 ? 2 : m<8 ? 5 : 8, 1);
+}
+const dateKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fmtDay = t => new Date(t).toLocaleDateString(undefined, {weekday:'short'});
+const fmtDate = t => new Date(t).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+function daysAgo(t){ return Math.round((sod(new Date()) - sod(t)) / DAY); }
+function agoText(t){
+  const n = daysAgo(t);
+  if (n <= 0) return 'Done today';
+  if (n === 1) return 'Yesterday';
+  if (n < 14) return `${n} days ago`;
+  if (n < 60) return `${Math.round(n/7)} weeks ago`;
+  if (n < 365) return `${Math.round(n/30.4)} months ago`;
+  const y = n/365; return y < 1.5 ? 'About a year ago' : `${Math.round(y)} years ago`;
+}
+
+/* ---------- state ---------- */
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+function seed(){
+  const t = sod(new Date()).getTime();
+  const mk = (name, emoji, freq, target=1) => ({id:uid(), name, emoji, freq, target, created:t, archived:null});
+  return {
+    version:1,
+    chores:[
+      mk('Make the bed','🛏️','daily'), mk('Dishes','🍽️','daily'), mk('10-minute tidy','✨','daily'),
+      mk('Laundry','🧺','weekly'), mk('Vacuum','🧹','weekly'), mk('Water the plants','🪴','weekly',2), mk('Take out the trash','🗑️','weekly'),
+      mk('Clean out the fridge','🧊','monthly'), mk('Dust the shelves','🧽','monthly'),
+      mk('Litter box','🐾','loose'), mk('Spring cleaning','🌸','loose'), mk('Clean the oven','🍳','loose'), mk('Wash the windows','🪟','loose'),
+    ],
+    log:[],
+    settings:{season:'auto', weekStart:1, view:'cozy'},
+    seeded:true,
+  };
+}
+function normalize(s){
+  if (!s || !Array.isArray(s.chores) || !Array.isArray(s.log)) return null;
+  s.settings = Object.assign({season:'auto', weekStart:1, view:'cozy'}, s.settings || {});
+  s.chores.forEach(c => { c.target = Math.max(1, c.target|0 || 1); if (!FREQS.includes(c.freq)) c.freq = 'daily'; });
+  return s;
+}
+function load(){ try { const s = normalize(JSON.parse(localStorage.getItem(KEY))); if (s) return s; } catch(e){} return seed(); }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){ toast("Couldn't save on this device"); } }
+let state = load();
+save();
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch(e){}
+
+const active = () => state.chores.filter(c => !c.archived);
+const find = id => state.chores.find(c => c.id === id);
+const entries = (c, [a,b]) => state.log.filter(e => e.choreId === c.id && e.t >= a && e.t < b);
+const countNow = c => entries(c, range(c.freq)).length;
+function lastDone(c){ let t = null; for (const e of state.log) if (e.choreId === c.id && (t === null || e.t > t)) t = e.t; return t; }
+function groupProgress(freq){
+  let done = 0, total = 0;
+  for (const c of active()) if (c.freq === freq){ total += c.target; done += Math.min(c.target, countNow(c)); }
+  return {done, total, pct: total ? done/total : null};
+}
+function seasonPoints(){ const a = seasonStart(new Date()).getTime(); let p = 0; for (const e of state.log) if (e.t >= a) p += e.pts || 0; return p; }
+const unlockedCount = (p = seasonPoints()) => THRESH.filter(t => p >= t).length;
+const viewSeason = () => state.settings.season === 'auto' ? seasonOf(new Date()) : state.settings.season;
+
+function dayPct(day){
+  const [a,b] = range('daily', day);
+  let done = 0, total = 0;
+  for (const c of state.chores){
+    if (c.freq !== 'daily' || c.created >= b || (c.archived && c.archived <= a)) continue;
+    total += c.target; done += Math.min(c.target, entries(c,[a,b]).length);
+  }
+  return total ? done/total : null;
+}
+
+/* ---------- seasons & scene ---------- */
+const SEASONS = {
+  fall:{ name:'Fall', icon:'🍂', tag:'Sweater weather', theme:'#241a14' },
+  winter:{ name:'Winter', icon:'❄️', tag:'Snowed in & snug', theme:'#1b2129' },
+  spring:{ name:'Spring', icon:'🌷', tag:'Fresh air & flowers', theme:'#1f241d' },
+  summer:{ name:'Summer', icon:'☀️', tag:'Long, golden evenings', theme:'#1d1f2b' },
+};
+// What you see past the porch, per season.
+const OUT = {
+  fall:{ sky:['#b9b2a6','#e6c99e','#f3d6a6'], mtn:'#968fa0', cap:'#ece7ee', far:['#c99a68','#d4a873','#bf8a5c','#b98455'],
+    near:['#c2552b','#dc8a2f','#e8b14a','#a8441f','#d9702c'], trunk:'#3e2a1f', lake:['#d6c8ae','#8f8676'], refl:'#d08a45',
+    ground:['#b8682a','#d9993f','#a95d28','#c97b30'], parts:'leaf', partCols:['#d9733a','#e8a33d','#b8562e','#f0c060'] },
+  winter:{ sky:['#9fb0c4','#d6d8df','#eadfd4'], mtn:'#7f8ca2', cap:'#f4f6fa', far:['#4f655f','#5d726c','#45594f'],
+    near:['#2c463e','#365549'], trunk:'#3d3029', lake:['#e2eaf1','#a9bccd'], refl:'#7b8f93',
+    ground:['#eef2f7','#dde5ee','#ffffff','#e6ecf3'], pines:true, parts:'snow' },
+  spring:{ sky:['#a2c6dc','#dce8e4','#f5e6cf'], mtn:'#8d9fb0', cap:'#eef2f6', far:['#9cbf86','#b3cf98','#8fb27a'],
+    near:['#7cb35d','#9bcb6f','#f2b6c6','#f6cbd6','#6aa34f','#eaa1b6'], trunk:'#4f3a2d', lake:['#b4d3d8','#6f9aa8'], refl:'#8fbf7a',
+    ground:['#6f9e4c','#86b45c','#5f8c40','#9cc46a'], parts:'petal', partCols:['#f6bccb','#f9d3dd','#efa8bb'] },
+  summer:{ sky:['#3a4374','#c4727a','#f5b169'], sun:true, mtn:'#57496b', cap:'#c49db0', far:['#2f4a3d','#3a5744','#2a4236'],
+    near:['#24452d','#2f5737','#3a6440'], trunk:'#241b16', lake:['#e39a6c','#4c4a6c'], refl:'#f2b46a',
+    ground:['#35592f','#40683a','#2d4c28','#4a7442'], parts:'firefly' },
+};
+const STONES = ['#8a7a6c','#9b8a78','#75685d','#a8968a','#83756a'];
+
+const at = (x, y, svg, s = 1) => `<g transform="translate(${x} ${y})${s !== 1 ? ` scale(${s})` : ''}">${svg}</g>`;
+function rng(seed){ return () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// A cluster of soft dots: foliage, fallen leaves, flower heads.
+function blob(cx, cy, rx, ry, cols, n, seed, r0 = 4, r1 = 9){
+  const r = rng(seed); let s = '';
+  for (let i = 0; i < n; i++){
+    const a = r()*Math.PI*2, d = Math.sqrt(r());
+    s += `<circle cx="${(cx + Math.cos(a)*rx*d).toFixed(1)}" cy="${(cy + Math.sin(a)*ry*d).toFixed(1)}" r="${(r0 + r()*(r1 - r0)).toFixed(1)}" fill="${cols[Math.floor(r()*cols.length)]}"/>`;
+  }
+  return s;
+}
+function pine(x, y, h, col, snow){
+  let s = `<rect x="${x-1.5}" y="${y - h*.15}" width="3" height="${h*.15}" fill="#3d2c22"/>`;
+  for (let i = 0; i < 4; i++){
+    const ty = y - h*.12 - i*h*.21, w = h*(.36 - i*.07);
+    s += `<path d="M${x-w} ${ty} L${x} ${ty - h*.34} L${x+w} ${ty}Z" fill="${col}"/>`;
+    if (snow) s += `<path d="M${x - w*.55} ${ty - h*.15} L${x} ${ty - h*.34} L${x + w*.55} ${ty - h*.15} Q${x} ${ty - h*.1} ${x - w*.55} ${ty - h*.15}Z" fill="#f4f7fb"/>`;
+  }
+  return s;
+}
+
+const D = {
+  pumpkin:(c,c2,s=1)=>`<g transform="scale(${s})"><ellipse cx="-7" cy="-9" rx="8" ry="9" fill="${c2}"/><ellipse cx="7" cy="-9" rx="8" ry="9" fill="${c2}"/><ellipse cx="0" cy="-9.5" rx="7.5" ry="9.5" fill="${c}"/><ellipse cx="-3" cy="-13" rx="2" ry="4" fill="#fff" opacity=".15"/><path d="M0 -18 q1 -5 4 -6" stroke="#5b4429" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M2 -19 q6 -4 9 0 q-5 2 -9 0z" fill="#6f8a48"/></g>`,
+  mug:(c,steam=true,extra='')=>`${steam?`<path class="steam" d="M-3 -18 q-3 -4 0 -8 q3 -4 0 -8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/><path class="steam" style="animation-delay:1.4s" d="M3 -18 q-3 -4 0 -8 q3 -4 0 -8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>`:''}<path d="M7 -12 q6 0 6 5 q0 5 -6 5" stroke="${c}" stroke-width="2.6" fill="none"/><rect x="-8" y="-16" width="15" height="16" rx="3.5" fill="${c}"/><rect x="-8" y="-16" width="4" height="16" rx="2" fill="#fff" opacity=".18"/>${extra}`,
+  cup:(c,extra='')=>`<path class="steam" d="M0 -14 q-3 -4 0 -8 q3 -4 0 -8" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/><ellipse cx="0" cy="-1" rx="13" ry="2.8" fill="${c}"/><path d="M-9 -11 h18 q-1 10 -9 10 q-8 0 -9 -10z" fill="${c}"/><path d="M9 -9 q5 0 4 4 q-1 3 -5 2" stroke="${c}" stroke-width="2" fill="none"/>${extra}`,
+  candle:(c,h=20)=>`<circle cx="0" cy="${-h-6}" r="10" fill="#ffd27a" opacity=".35" filter="url(#blur)"/><path class="flame" d="M0 ${-h-12} q4 5 0 9 q-4 -4 0 -9z" fill="#ffb648"/><path d="M0 ${-h-9} q1.8 3 0 5 q-1.8 -2 0 -5z" fill="#fff3c4"/><rect x="-4.5" y="${-h-3}" width="9" height="${h}" rx="1.5" fill="${c}"/><rect x="-4.5" y="${-h-3}" width="3" height="${h}" rx="1.5" fill="#fff" opacity=".2"/><ellipse cx="0" cy="-2" rx="8" ry="2.4" fill="#6b5240"/>`,
+  pot:(c)=>`<path d="M-8 0 L-10 -12 L10 -12 L8 0Z" fill="${c}"/><rect x="-11" y="-14" width="22" height="4" rx="1.5" fill="${c}"/><rect x="-11" y="-14" width="22" height="4" rx="1.5" fill="#000" opacity=".12"/>`,
+  jar:(inner)=>`<rect x="-9" y="-22" width="18" height="22" rx="4" fill="#fff" opacity=".35" stroke="#d9c8ae" stroke-width="1"/>${inner}<rect x="-7" y="-26" width="14" height="5" rx="1.5" fill="#8a6440"/>`,
+  cat:(body,belly,acc='')=>`<g class="breathe"><path d="M18 -4 q12 2 6 8 q-14 5 -30 1" stroke="${body}" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="2" cy="-9" rx="22" ry="10" fill="${body}"/><ellipse cx="-4" cy="-4" rx="12" ry="4" fill="${belly}" opacity=".7"/><circle cx="-16" cy="-12" r="8.5" fill="${body}"/><path d="M-23 -16 L-22 -25 L-16 -19Z M-14 -19 L-9 -25 L-9 -16Z" fill="${body}"/><path d="M-21 -21 L-20.6 -23.5 L-18.5 -21Z M-12.4 -20 L-10.4 -22.5 L-10.6 -18.5Z" fill="#f2b5a8"/><path d="M-21 -12 q2 1.6 4 0 M-15 -12 q2 1.6 4 0" stroke="#2a1f1a" stroke-width="1.1" fill="none" stroke-linecap="round"/><circle cx="-16" cy="-9.3" r=".9" fill="#d98a7c"/><ellipse cx="8" cy="-15" rx="10" ry="3" fill="#ffb35a" opacity=".25"/></g>${acc}<text class="zz" x="-6" y="-26" font-size="8" fill="#e8d6bd" font-family="sans-serif">z</text><text class="zz" style="animation-delay:2s" x="-1" y="-30" font-size="6" fill="#e8d6bd" font-family="sans-serif">z</text>`,
+};
+const rug = (a,b,c) => `<ellipse cx="176" cy="250" rx="124" ry="19" fill="${a}"/>` + [110,92,74,56,38,20].map((rx,i) => `<ellipse cx="176" cy="250" rx="${rx}" ry="${(rx*19/124).toFixed(1)}" fill="none" stroke="${i%2 ? b : c}" stroke-width="2.2" ${i%2 ? 'stroke-dasharray="3 2"' : ''}/>`).join('') + `<ellipse cx="176" cy="250" rx="124" ry="19" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="2"/>`;
+const blanket = (c,c2) => `<path d="M6 182 Q36 176 70 184 L76 252 Q58 258 40 252 Q22 258 8 250Z" fill="${c}"/>${[16,28,40,52,64].map(x => `<path d="M${x} 182 Q${x+2} 216 ${x} 252" stroke="${c2}" stroke-width="2.2" fill="none" stroke-dasharray="3 2"/>`).join('')}<path d="M8 250 Q22 258 40 252 Q58 258 76 252" stroke="${c2}" stroke-width="2" fill="none"/><g transform="rotate(-10 60 214)"><rect x="46" y="200" width="30" height="26" rx="9" fill="${c2}"/><path d="M50 213 h22" stroke="${c}" stroke-width="1.5" stroke-dasharray="2 2"/></g>`;
+const planter = inner => `<g transform="translate(140 206)">${inner}<rect x="-19" y="-12" width="38" height="12" rx="2" fill="#5e3c24"/><rect x="-19" y="-12" width="38" height="3" fill="#7a5032"/></g>`;
+const LOGS = (() => {
+  let s = ''; const rows = [[-6,[-18,-6,6,18]],[-17,[-12,0,12]],[-28,[-6,6]],[-39,[0]]];
+  for (const [y,xs] of rows) for (const x of xs) s += `<circle cx="${238+x}" cy="${204+y}" r="6.5" fill="#c9975f" stroke="#5e3c24" stroke-width="1.8"/><circle cx="${238+x}" cy="${204+y}" r="3" fill="none" stroke="#a87a48" stroke-width=".8"/>`;
+  return s;
+})();
+const LANTERN = `<path d="M0 0 V18" stroke="#1e140e" stroke-width="1"/><circle class="twinkle" style="animation-duration:4s" cx="0" cy="31" r="17" fill="#ffc46b" opacity=".45" filter="url(#blur)"/><path d="M-6 22 h12 l-2 -4 h-8z" fill="#1e140e"/><rect x="-6" y="22" width="12" height="18" rx="1.5" fill="#ffd38a"/><path class="flame" d="M0 27 q3 4 0 8 q-3 -4 0 -8z" fill="#ff9f3a"/><path d="M-6 22 v18 M6 22 v18" stroke="#1e140e" stroke-width="1.6"/><rect x="-7" y="40" width="14" height="3" rx="1" fill="#1e140e"/><circle cx="0" cy="17" r="2" fill="none" stroke="#1e140e" stroke-width="1.2"/>`;
+function lights(cols){
+  const P = t => [t*262, 17 + 20*Math.sin(Math.PI*((t*3) % 1))];
+  let wire = 'M0 17', s = '';
+  for (let i = 1; i <= 60; i++){ const [x,y] = P(i/60); wire += ` L${x.toFixed(1)} ${y.toFixed(1)}`; }
+  s += `<path d="${wire}" stroke="#1e140e" stroke-width="1" fill="none"/>`;
+  for (let i = 0; i < 18; i++){
+    const [x,y] = P(0.03 + i*0.0555), c = cols[i % cols.length];
+    s += `<circle class="twinkle" style="animation-delay:${((i*.37) % 2.4).toFixed(2)}s" cx="${x.toFixed(1)}" cy="${(y+4).toFixed(1)}" r="7" fill="${c}" opacity=".55" filter="url(#blur)"/><circle cx="${x.toFixed(1)}" cy="${(y+4).toFixed(1)}" r="2.4" fill="${c}"/>`;
+  }
+  const r = rng(41);
+  for (let i = 0; i < 26; i++){
+    const x = (r()*200).toFixed(1), y = (20 + r()*70).toFixed(1);
+    s += `<circle cx="${x}" cy="${y}" r="4" fill="${cols[0]}" opacity=".3" filter="url(#blur)"/><circle class="twinkle" style="animation-delay:${(r()*2.4).toFixed(2)}s" cx="${x}" cy="${y}" r="1.4" fill="${cols[0]}"/>`;
+  }
+  return s;
+}
+const FIRE = `<ellipse cx="0" cy="-4" rx="28" ry="8" fill="#ff7a2a" opacity=".6" filter="url(#blur)"/><g class="flame" style="animation-duration:1.9s"><path d="M-22 0 C-24 -14 -12 -20 -10 -34 C-4 -24 -2 -30 0 -44 C4 -28 10 -30 12 -36 C14 -22 26 -14 22 0Z" fill="#d9481f"/></g><g class="flame" style="animation-duration:1.3s"><path d="M-15 0 C-16 -10 -6 -16 -4 -28 C0 -18 4 -22 6 -32 C10 -16 18 -10 15 0Z" fill="#f2862c"/></g><g class="flame" style="animation-duration:.9s"><path d="M-8 0 C-8 -8 -2 -10 0 -20 C2 -10 8 -8 8 0Z" fill="#ffd36b"/></g><rect x="-24" y="-4" width="48" height="7" rx="3.5" fill="#3a2418" transform="rotate(-6)"/><rect x="-22" y="-3" width="44" height="7" rx="3.5" fill="#4a2e1e" transform="rotate(8)"/><ellipse cx="0" cy="2" rx="18" ry="2.5" fill="#ff9a3a" opacity=".85"/>`;
+
+const ITEMS = {
+  fall:{
+    pumpkins:['A pile of pumpkins', at(318,234,D.pumpkin('#e5822f','#d06d26'),1.5) + at(346,238,D.pumpkin('#f0a640','#dc8f30'),1.05) + at(291,240,D.pumpkin('#efe2c8','#ddcfb2'),.85)],
+    mugs:['Two mugs of hot cider', at(158,219,D.mug('#efe4d2')) + at(198,221,D.cup('#f4ece0'))],
+    rug:['A woven rug', rug('#a9814f','#d9b780','#7e5c38')],
+    logs:['A stack of firewood', LOGS],
+    mantel:['Candles on the mantel', at(276,132,D.candle('#f3e6cf')) + at(290,132,D.candle('#efe0c4',12)) + at(326,132,D.pumpkin('#e58a3a','#d4742c'),.8) + at(347,132,D.pumpkin('#e8b04a','#d89a35'),.6)],
+    blanket:['A chunky knit blanket', blanket('#c9963e','#e2b45c')],
+    lanterns:['Hanging lanterns', at(100,15,LANTERN) + at(222,15,LANTERN)],
+    cat:['A sleepy ginger cat', at(236,259,D.cat('#e09a52','#f6dcc0'),1.15)],
+    flowers:['A planter of mums', planter(blob(0,-18,17,8,['#3f6b34','#4f7a3c'],14,30,3,5) + blob(0,-20,16,8,['#e07a2e','#f0a640','#c95a24','#f2c45a'],30,31,1.8,3.4))],
+    lights:['Twinkle lights', lights(['#ffd27a','#ffbf6b','#ffe4a3'])],
+  },
+  winter:{
+    pumpkins:['A little lit-up tree', at(347,240, D.pot('#8a6440') + pine(0,-12,50,'#2f5a45',true) + [[-8,-24,'#ff6b5a'],[6,-30,'#ffd36b'],[-4,-40,'#7fc3ff'],[8,-18,'#ffd36b'],[-10,-16,'#7fe0a0']].map(([x,y,c])=>`<circle cx="${x}" cy="${y}" r="1.8" fill="${c}"/><circle cx="${x}" cy="${y}" r="4" fill="${c}" opacity=".35" filter="url(#blur)"/>`).join(''),.85) + at(318,242,`<rect x="-10" y="-14" width="20" height="14" rx="1.5" fill="#a93f3a"/><rect x="-2" y="-14" width="4" height="14" fill="#f2d7a0"/><path d="M0 -14 q-7 -7 -8 -1 q4 2 8 1 q7 -7 8 -1 q-4 2 -8 1" stroke="#f2d7a0" stroke-width="2" fill="none"/>`)],
+    mugs:['Cocoa with marshmallows', at(158,219,D.mug('#b5524b',true,`<rect x="-5" y="-18" width="4" height="3" rx="1" fill="#fff"/><rect x="0" y="-18.5" width="4" height="3" rx="1" fill="#fff"/>`)) + at(196,219,D.mug('#e9e2d6',true,`<rect x="-4" y="-18" width="4" height="3" rx="1" fill="#fff"/>`))],
+    rug:['A cozy plaid rug', rug('#8e3934','#e9dccb','#5d2522')],
+    logs:['A stack of firewood', LOGS + `<path d="M218 160 q20 -4 40 0" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".85"/>`],
+    mantel:['Stockings on the mantel', [[280,'#a93f3a'],[302,'#3f6b52'],[324,'#a93f3a']].map(([x,c])=>at(x,143,`<path d="M-4 0 h9 v13 q0 7 -6 7 h-7 q-4 0 -4 -4 q0 -4 4 -4 h4z" fill="${c}"/><rect x="-5" y="-1" width="11" height="5" rx="1.5" fill="#f4ede2"/>`)).join('') + at(346,132,D.candle('#f3e6cf',14))],
+    blanket:['A red plaid blanket', blanket('#9e3b36','#e3d3bd')],
+    lanterns:['Hanging lanterns', at(100,15,LANTERN) + at(222,15,LANTERN)],
+    cat:['A gray cat in a scarf', at(236,259,D.cat('#9aa1ab','#e6e8ec',`<path d="M-12 -6 q4 -2 6 2" stroke="#c8413b" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M-8 -3 l3 6" stroke="#c8413b" stroke-width="3" stroke-linecap="round"/>`),1.15)],
+    flowers:['A planter of poinsettias', planter(blob(0,-18,16,7,['#2f5a45','#3f6b52'],14,32,3,5) + blob(0,-21,15,7,['#c8413b','#a93a35','#d8504a'],22,33,2.2,3.6) + `<circle cx="-6" cy="-21" r="1.4" fill="#f0c94a"/><circle cx="6" cy="-20" r="1.4" fill="#f0c94a"/>`)],
+    lights:['Twinkle lights', lights(['#ffe2a8','#ff8a7a','#ffd36b','#a8e0b8'])],
+  },
+  spring:{
+    pumpkins:['Seedlings and a watering can', at(292,240,`<path d="M-9 0 h18 l1 -16 h-20z" fill="#8fb8c9"/><path d="M10 -13 l11 -10" stroke="#8fb8c9" stroke-width="3.2" stroke-linecap="round"/><path d="M-9 -14 q-9 -1 -7 -11 q3 -3 7 2" stroke="#7aa6b8" stroke-width="2.4" fill="none"/>`) + [312,330,348].map((x,i)=>at(x,240,D.pot(['#c98a5e','#d99a6e','#b97a50'][i]) + `<path d="M0 -14 v-8 M0 -19 q-6 -3 -7 -8 q6 0 7 6 M0 -20 q5 -3 7 -8 q-6 0 -7 6" stroke="#6f9f5b" stroke-width="2" fill="#86b86c"/>`,.9)).join('')],
+    mugs:['A pot of tea for two', at(156,220,D.cup('#f3eef2',`<circle cx="-4" cy="-6" r="1.5" fill="#e8798f"/><circle cx="3" cy="-5" r="1.3" fill="#9d8ac7"/>`)) + at(196,220,`<ellipse cx="0" cy="-10" rx="11" ry="10" fill="#f3eef2"/><path d="M10 -12 q8 -2 9 -9" stroke="#f3eef2" stroke-width="3" fill="none"/><path d="M-10 -14 q-7 0 -6 7" stroke="#f3eef2" stroke-width="2.5" fill="none"/><rect x="-5" y="-22" width="10" height="4" rx="2" fill="#e8c4cf"/><circle cx="-3" cy="-9" r="2" fill="#e8798f"/><circle cx="3" cy="-6" r="1.6" fill="#9d8ac7"/>`)],
+    rug:['A soft sage rug', rug('#7d9467','#d8e2c4','#5f7550')],
+    logs:['A stack of firewood', LOGS],
+    mantel:['Blossoms on the mantel', at(298,132,`<path d="M-6 0 h12 l2 -16 q-8 -4 -16 0z" fill="#d8e6ee"/><path d="M0 -16 q-6 -14 -14 -20 M0 -16 q2 -14 10 -22 M0 -16 q8 -8 16 -10" stroke="#5e4637" stroke-width="1.4" fill="none"/>` + blob(0,-32,16,8,['#f6bccb','#f9d3dd','#efa8bb','#fff'],24,34,1.6,2.8)) + at(340,132,D.candle('#f7eef0',16))],
+    blanket:['A sage knit blanket', blanket('#8ea67a','#b9cba3')],
+    lanterns:['Hanging lanterns', at(100,15,LANTERN) + at(222,15,LANTERN)],
+    cat:['A calico cat with a flower', at(236,259,D.cat('#f2ede4','#fff',`<ellipse cx="6" cy="-13" rx="7" ry="4.5" fill="#d58b4e"/><ellipse cx="-4" cy="-8" rx="5" ry="3.5" fill="#3e3632"/><circle cx="-20" cy="-17" r="2.4" fill="#e8798f"/><circle cx="-20" cy="-17" r="1" fill="#f6d36b"/>`),1.15)],
+    flowers:['A planter of tulips', planter(`<g stroke="#5f8f4b" stroke-width="1.6">${[-12,-6,0,6,12].map((x,i)=>`<path d="M${x} -12 q${i-2} -9 ${(i-2)*1.5} -${16+(i%2)*4}"/>`).join('')}</g>` + [-12,-6,0,6,12].map((x,i)=>{const tx=x+(i-2)*1.5, ty=-28-(i%2)*4; return `<path d="M${tx-3} ${ty} q3 -4 6 0 v4 h-6z" fill="${['#e8798f','#f0a64f','#b993d6','#f2c45a','#e8798f'][i]}"/>`;}).join(''))],
+    lights:['Twinkle lights', lights(['#fff1c2','#f9d3dd','#e2f1d8'])],
+  },
+  summer:{
+    pumpkins:['A bucket of sunflowers', at(322,240,`<path d="M0 -12 v-26 M-6 -12 q-4 -14 -10 -20 M6 -12 q4 -14 10 -22" stroke="#4f7f3a" stroke-width="2" fill="none"/>` + [[0,-40],[-16,-32],[16,-34]].map(([x,y])=>at(x,y,Array.from({length:12},(_,i)=>`<ellipse cx="0" cy="-5" rx="2.2" ry="4.2" fill="#f6c443" transform="rotate(${i*30})"/>`).join('') + `<circle r="3.8" fill="#6a4426"/>`)).join('') + `<path d="M-11 0 L-13 -14 H13 L11 0Z" fill="#9aa6ad"/><path d="M-13 -14 H13" stroke="#c3ccd2" stroke-width="2"/>`,1.15)],
+    mugs:['Two glasses of lemonade', [158,196].map(x=>at(x,220,`<path d="M-6 -20 l2 20 h8 l2 -20z" fill="#fff" opacity=".35" stroke="#e8dcc4" stroke-width=".8"/><path d="M-5.4 -14 l1.6 14 h7.6 l1.6 -14z" fill="#f8d96a"/><path d="M2 -27 l-2 22" stroke="#e8775f" stroke-width="1.6"/><circle cx="-6" cy="-19" r="4" fill="#f6d34a" stroke="#fff6c8" stroke-width="1"/>`)).join('')],
+    rug:['A striped seaside rug', rug('#2f7f84','#f0dcb0','#e0884f')],
+    logs:['A stack of firewood', LOGS],
+    mantel:['Seashells and a jar of fireflies', at(296,132,D.jar(`<g fill="#fff27a"><circle class="twinkle" cx="-3" cy="-7" r="1.8"/><circle class="twinkle" style="animation-delay:.8s" cx="3" cy="-12" r="1.8"/><circle class="twinkle" style="animation-delay:1.6s" cx="-1" cy="-17" r="1.6"/></g><circle cx="0" cy="-11" r="10" fill="#fff27a" opacity=".3" filter="url(#blur)"/>`)) + at(322,132,`<path d="M0 0 L-10 -4 Q-11 -15 0 -17 Q11 -15 10 -4Z" fill="#f6c7b0"/><path d="M0 0 L-6 -14 M0 0 L-2 -16.5 M0 0 L3 -16.5 M0 0 L7 -13" stroke="#e39f86" stroke-width="1"/>`) + at(345,132,D.candle('#f3e6cf',13))],
+    blanket:['A soft striped throw', blanket('#3f8f92','#e6d3a8')],
+    lanterns:['Hanging lanterns', at(100,15,LANTERN) + at(222,15,LANTERN)],
+    cat:['A black cat by the fire', at(236,259,D.cat('#3a3232','#5d5050'),1.15)],
+    flowers:['A planter of lavender', planter(`<g stroke="#6f8f5a" stroke-width="1.2">${Array.from({length:9},(_,i)=>`<path d="M${-14+i*3.5} -12 l${(i-4)*.8} -${14+(i%3)*4}"/>`).join('')}</g>` + Array.from({length:9},(_,i)=>{const x=-14+i*3.5+(i-4)*.8, y=-26-(i%3)*4; return `<ellipse cx="${x}" cy="${y}" rx="1.8" ry="4.5" fill="${i%2?'#9b84c9':'#b49be0'}"/>`;}).join(''))],
+    lights:['Twinkle lights', lights(['#ffd27a','#ffbf6b','#ffe4a3'])],
+  },
+};
+
+function outdoor(sn){
+  const O = OUT[sn]; let s = `<rect width="360" height="126" fill="url(#sky)"/>`;
+  if (O.sun) s += `<circle cx="118" cy="112" r="34" fill="#ffd9a0" opacity=".45" filter="url(#soft)"/><circle cx="118" cy="114" r="13" fill="#ffe2a8"/>`;
+  else s += `<ellipse cx="120" cy="44" rx="80" ry="10" fill="#fff" opacity=".2" filter="url(#soft)"/><ellipse cx="250" cy="30" rx="60" ry="8" fill="#fff" opacity=".16" filter="url(#soft)"/>`;
+  s += `<path d="M120 126 L170 84 L190 66 L214 44 L238 66 L262 80 L330 126Z" fill="${O.mtn}"/><path d="M214 44 L238 66 L262 80 L330 126 L250 126Z" fill="#000" opacity=".12"/><path d="M201 57 L214 44 L229 58 L222 56 L216 61 L209 55Z" fill="${O.cap}"/>`;
+  s += `<rect y="100" width="360" height="26" fill="#fff" opacity=".12" filter="url(#soft)"/>`;
+  s += `<path d="M0 126 V113 Q60 106 120 113 T240 111 T360 113 V126Z" fill="${O.far[0]}"/>` + blob(180,113,190,6,O.far,70,11,3,6);
+  s += `<rect y="121" width="360" height="52" fill="url(#lake)"/><g opacity=".35">${blob(180,127,190,4,[O.refl],40,12,2,4)}</g>`;
+  if (O.sun) s += `<rect x="111" y="122" width="14" height="46" fill="#ffd38a" opacity=".55" filter="url(#soft)"/>`;
+  for (let i = 0; i < 9; i++){ const x = 60 + (i*47) % 200, y = 132 + (i*11) % 34; s += `<rect class="shimmer" style="animation-delay:${-i*.7}s" x="${x}" y="${y}" width="${10 + (i%3)*6}" height="1" rx=".5" fill="#fff" opacity=".35"/>`; }
+  s += `<ellipse cx="180" cy="123" rx="200" ry="6" fill="#fff" opacity=".28" filter="url(#soft)"/>`;
+  s += `<path d="M0 168 Q90 160 180 166 T360 164 V205 H0Z" fill="${O.ground[0]}"/>` + blob(180,184,190,16,O.ground,110,13,1.2,2.8);
+  if (O.pines) s += pine(232,127,26,O.near[0],true) + pine(247,128,20,O.near[1],true) + pine(125,168,64,O.near[1],true) + pine(72,176,160,O.near[0],true);
+  else s += `<path d="M66 172 L70 40 L78 40 L82 172Z" fill="${O.trunk}"/><path d="M75 92 L112 60 M72 112 L38 82" stroke="${O.trunk}" stroke-width="4"/>` + blob(232,112,26,12,O.near,22,15,3,7) + blob(88,28,125,50,O.near,110,14,8,16);
+  return s;
+}
+function particles(sn){
+  const O = OUT[sn]; let s = '';
+  for (let i = 0; i < 14; i++){
+    const x = 8 + i*25 + (i*13) % 11, d = 8 + (i*7) % 6, dl = -((i*2.9) % d);
+    if (O.parts === 'firefly'){ const y = 60 + (i*37) % 130; s += `<g transform="translate(${x} ${y})"><g class="ff" style="--d:${d-2}s;--dl:${dl}s"><circle r="4" fill="#fff3a0" opacity=".45" filter="url(#blur)"/><circle r="1.3" fill="#fff6b8"/></g></g>`; continue; }
+    const c = O.partCols ? O.partCols[i % O.partCols.length] : '#fff';
+    const shape = O.parts === 'snow' ? `<circle r="${1.1 + (i%3)*.6}" fill="#fff" opacity=".9"/>` : O.parts === 'petal' ? `<ellipse rx="2.4" ry="1.4" fill="${c}"/>` : `<path d="M-3.5 0 Q0 -2.6 3.5 0 Q0 2.6 -3.5 0Z" fill="${c}"/>`;
+    s += `<g transform="translate(${x} -10)"><g class="p" style="--d:${d}s;--dl:${dl}s">${shape}</g></g>`;
+  }
+  return s;
+}
+function porch(){
+  let s = `<rect width="360" height="15" fill="#3a271b"/><rect y="15" width="360" height="3" fill="#000" opacity=".35"/><path d="M0 7 H360" stroke="#2a1c13" stroke-width="1"/>`;
+  s += `<rect x="0" y="168" width="262" height="5" fill="#5a3a26"/><rect x="0" y="191" width="262" height="4" fill="#4f3322"/>`;
+  for (let x = 6; x < 258; x += 12) s += `<rect x="${x}" y="173" width="2.5" height="18" fill="#4a2f1f"/>`;
+  s += `<rect x="32" y="0" width="13" height="212" fill="#4a3020"/><rect x="32" y="0" width="4" height="212" fill="#6b4a33" opacity=".6"/><rect x="166" y="0" width="10" height="212" fill="#4a3020"/><rect x="166" y="0" width="3" height="212" fill="#6b4a33" opacity=".6"/>`;
+  s += `<g clip-path="url(#chim)"><rect x="262" y="0" width="98" height="216" fill="#3e352f"/>`;
+  const r = rng(21);
+  for (let row = 0; row < 16; row++){ let x = 262 - (row % 2)*10; const y = 1 + row*13.5; while (x < 360){ const w = 15 + r()*14; s += `<rect x="${(x+1).toFixed(1)}" y="${y}" width="${(w-2).toFixed(1)}" height="12" rx="4.5" fill="${STONES[Math.floor(r()*STONES.length)]}"/>`; x += w; } }
+  s += `<rect x="262" y="0" width="14" height="216" fill="#000" opacity=".25"/></g>`;
+  s += `<path d="M276 206 V162 Q312 138 348 162 V206Z" fill="#5c4f45"/><path d="M280 206 V164 Q312 143 344 164 V206Z" fill="#1c120c"/>`;
+  s += `<ellipse id="fireIn" cx="312" cy="188" rx="30" ry="20" fill="#ff8a3a" opacity=".5" filter="url(#soft)"/><g transform="translate(312 202)"><g id="fire" transform="scale(1)">${FIRE}</g></g>`;
+  s += `<rect x="256" y="202" width="104" height="14" rx="2" fill="#6f6157"/><rect x="256" y="202" width="104" height="3" fill="#8f7f72"/>`;
+  s += `<rect x="262" y="131" width="98" height="8" rx="2" fill="#5a3a26"/><rect x="262" y="131" width="98" height="2" fill="#7a5236"/><rect x="262" y="139" width="98" height="3" fill="#000" opacity=".3"/>`;
+  s += `<path d="M0 204 H360 V270 H0Z" fill="url(#deck)"/>`;
+  for (let i = -4; i <= 14; i++){ const xb = i*32 - 40, xt = 180 + (xb - 180)*.45; s += `<path d="M${xt.toFixed(1)} 204 L${xb} 270" stroke="#000" stroke-opacity=".2" stroke-width="1"/>`; }
+  s += `<path d="M0 226 H360 M0 252 H360" stroke="#000" stroke-opacity=".08"/>`;
+  return s;
+}
+const TABLE = `<path d="M116 216 L236 216 L244 226 L108 226Z" fill="#8a5a36"/><path d="M140 216 L136 226 M176 216 L176 226 M212 216 L216 226" stroke="#6e4528" stroke-width="1"/><path d="M116 216 L236 216" stroke="#a87048" stroke-width="1.5"/><rect x="108" y="226" width="136" height="6" fill="#5e3c24"/><rect x="118" y="232" width="6" height="30" fill="#45291a"/><rect x="228" y="232" width="6" height="30" fill="#45291a"/>`;
+const COUCH = `<rect x="-14" y="184" width="112" height="70" rx="18" fill="#cdb998"/><rect x="-14" y="230" width="104" height="44" rx="10" fill="#e2d1b6"/><rect x="80" y="206" width="32" height="68" rx="15" fill="#d8c5a6"/><rect x="80" y="206" width="8" height="68" rx="4" fill="#fff" opacity=".12"/><g transform="rotate(-12 18 214)"><rect x="0" y="198" width="36" height="30" rx="10" fill="#eee1cb"/></g><g transform="rotate(8 52 218)"><rect x="38" y="204" width="30" height="26" rx="9" fill="#bfa47c"/></g>`;
+
+let lastUnlocked = -1, sceneSeason = null;
+function buildScene(){
+  const sn = viewSeason(), O = OUT[sn], I = ITEMS[sn];
+  sceneSeason = sn;
+  const item = slot => `<g class="item" data-slot="${slot}">${I[slot][1]}</g>`;
+  const svg = `<svg viewBox="0 0 360 270" role="img" aria-label="Your cozy ${SEASONS[sn].name.toLowerCase()} porch">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${O.sky[0]}"/><stop offset=".7" stop-color="${O.sky[1]}"/><stop offset="1" stop-color="${O.sky[2]}"/></linearGradient>
+    <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${O.lake[0]}"/><stop offset="1" stop-color="${O.lake[1]}"/></linearGradient>
+    <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a4e30"/><stop offset="1" stop-color="#3e2718"/></linearGradient>
+    <radialGradient id="fireG" cx="312" cy="180" r="190" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffae55" stop-opacity=".75"/><stop offset=".4" stop-color="#ff9a40" stop-opacity=".25"/><stop offset="1" stop-color="#ff9a40" stop-opacity="0"/></radialGradient>
+    <radialGradient id="vig" cx="50%" cy="45%" r="75%"><stop offset=".55" stop-color="#140a04" stop-opacity="0"/><stop offset="1" stop-color="#140a04" stop-opacity=".6"/></radialGradient>
+    <filter id="blur" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="2.2"/></filter>
+    <filter id="soft" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="5"/></filter>
+    <clipPath id="chim"><rect x="262" y="0" width="98" height="216"/></clipPath>
+  </defs>
+  ${outdoor(sn)}
+  <g id="night" style="display:none"><rect width="360" height="205" fill="#0f1430" opacity=".62"/><circle cx="242" cy="34" r="7" fill="#fbf3d0"/><circle cx="245" cy="32" r="6" fill="#2b2f55" opacity=".6"/><g fill="#fff">${[[150,30],[196,22],[230,60],[250,18],[205,48],[180,40],[140,52]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r=".8"/>`).join('')}</g></g>
+  ${porch()}
+  ${['rug','flowers','logs','mantel','lanterns'].map(item).join('')}
+  ${TABLE}
+  ${['mugs','cat','pumpkins'].map(item).join('')}
+  ${COUCH}
+  ${item('blanket')}
+  <rect id="dim" width="360" height="270" fill="#120a05" opacity="0"/>
+  <rect id="glow" width="360" height="270" fill="url(#fireG)" opacity=".2"/>
+  ${item('lights')}
+  ${particles(sn)}
+  <rect width="360" height="270" fill="url(#vig)" pointer-events="none"/>
+</svg>`;
+  document.getElementById('scene').innerHTML = svg;
+  lastUnlocked = -1;
+}
+function updateScene(){
+  if (sceneSeason !== viewSeason()) buildScene();
+  const n = unlockedCount();
+  document.querySelectorAll('#scene .item').forEach(el => {
+    const i = SLOTS.indexOf(el.dataset.slot);
+    const on = i < n;
+    if (on && lastUnlocked >= 0 && i >= lastUnlocked){ el.classList.remove('pop'); void el.getBBox(); el.classList.add('pop'); }
+    el.classList.toggle('on', on);
+  });
+  lastUnlocked = n;
+  const h = new Date().getHours(), night = h >= 19 || h < 6;
+  document.getElementById('night').style.display = night ? '' : 'none';
+  document.getElementById('dim').setAttribute('opacity', night ? .22 : 0);
+  // The fire starts as embers each morning and roars as today's chores get done.
+  const p = groupProgress('daily').pct || 0;
+  document.getElementById('fire').setAttribute('transform', `scale(${(0.25 + 0.75*p).toFixed(2)})`);
+  document.getElementById('fireIn').setAttribute('opacity', (0.2 + 0.6*p).toFixed(2));
+  document.getElementById('glow').setAttribute('opacity', (0.15 + 0.75*p).toFixed(2));
+}
+
+/* ---------- rendering ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+const DOTS = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>`;
+
+function rowHTML(c){
+  let cls = '', sub = '';
+  if (c.freq === 'loose'){
+    const t = lastDone(c);
+    const today = t !== null && daysAgo(t) <= 0;
+    if (today) cls = 'done';
+    sub = t === null ? 'Not logged yet' : today ? '<span class="age-fresh">Done today</span>' : `Last done ${agoText(t).toLowerCase()} · ${fmtDate(t)}`;
+    if (t !== null && daysAgo(t) === 1) sub = `Last done yesterday`;
+  } else {
+    const es = entries(c, range(c.freq)), n = es.length;
+    if (n >= c.target) cls = 'done'; else if (n > 0) cls = 'partial';
+    if (c.target > 1){
+      sub = `<span class="pips">${Array.from({length:c.target},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span> ${Math.min(n,c.target)} of ${c.target} ${PERIOD_WORD[c.freq]}`;
+    } else if (n){
+      const t = es[es.length-1].t;
+      sub = c.freq === 'daily' ? 'Done' : c.freq === 'weekly' ? `Done ${fmtDay(t)}` : `Done ${fmtDate(t)}`;
+    } else {
+      sub = `+${PTS[c.freq]} cozy points`;
+    }
+  }
+  return `<li class="row ${cls}" data-id="${c.id}">
+    <span class="check">${CHECK}</span>
+    <div class="info"><div class="name">${c.emoji ? `<span class="em">${esc(c.emoji)}</span>` : ''}${esc(c.name)}</div><div class="sub">${sub}</div></div>
+    <button class="more" data-edit="${c.id}" aria-label="Edit ${esc(c.name)}">${DOTS}</button>
+  </li>`;
+}
+
+function renderLists(){
+  const all = active();
+  if (!all.length){
+    document.getElementById('lists').innerHTML = `<div class="card empty">No chores yet.<br>Tap <b>+</b> to add your first one.</div>`;
+    return;
+  }
+  let html = '';
+  for (const f of FREQS){
+    let cs = all.filter(c => c.freq === f);
+    if (!cs.length) continue;
+    let chip = '';
+    if (f === 'loose'){
+      cs = cs.slice().sort((a,b) => (lastDone(a) ?? -Infinity) - (lastDone(b) ?? -Infinity));
+      chip = `<span class="chip">by longest ago</span>`;
+    } else {
+      const g = groupProgress(f);
+      chip = `<span class="chip ${g.done >= g.total ? 'full' : ''}">${Math.round(g.pct*100)}%</span>`;
+    }
+    html += `<section class="group"><div class="ghead"><h2>${GROUP_TITLE[f]}</h2>${chip}</div><ul class="list card">${cs.map(rowHTML).join('')}</ul></section>`;
+  }
+  document.getElementById('lists').innerHTML = html;
+}
+
+function renderHeader(){
+  const now = new Date(), sn = viewSeason(), S = SEASONS[sn], h = now.getHours();
+  document.body.dataset.season = sn;
+  document.querySelector('meta[name=theme-color]').setAttribute('content', S.theme);
+  document.getElementById('hello').textContent = h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('seasonLine').textContent = `${S.icon} ${S.tag} · ${now.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'})}`;
+}
+
+function renderCozyFoot(){
+  const d = groupProgress('daily'), pts = seasonPoints(), n = unlockedCount(pts), S = SEASONS[viewSeason()];
+  const realS = SEASONS[seasonOf(new Date())];
+  document.getElementById('todayLine').textContent = !d.total ? 'No daily chores' : d.done >= d.total ? 'The fire’s roaring. All done today ✓' : d.done ? `Today: ${d.done} of ${d.total} done` : 'Check off a chore to stoke the fire';
+  document.getElementById('ptsLine').textContent = `${pts} pts this ${realS.name.toLowerCase()}`;
+  const bar = document.getElementById('nextBar'), next = document.getElementById('nextLine');
+  if (n >= THRESH.length){ bar.style.width = '100%'; next.textContent = `Your ${S.name.toLowerCase()} porch is complete. A fresh one starts next season.`; }
+  else {
+    const lo = n ? THRESH[n-1] : 0, hi = THRESH[n];
+    bar.style.width = `${Math.max(3, (pts-lo)/(hi-lo)*100)}%`;
+    next.textContent = `Next: ${ITEMS[viewSeason()][SLOTS[n]][0].toLowerCase()} at ${hi} pts`;
+  }
+}
+
+function ringSVG(){
+  const rs = [['daily',66],['weekly',50],['monthly',34]];
+  return `<svg viewBox="0 0 160 160" aria-hidden="true">${rs.map(([f,r],i)=>{
+    const C = 2*Math.PI*r, p = groupProgress(f).pct || 0;
+    return `<circle class="ring-bg" cx="80" cy="80" r="${r}" fill="none" stroke="var(--r${i+1})" stroke-width="13"/><circle class="ring-fg" data-c="${C}" data-p="${p}" cx="80" cy="80" r="${r}" fill="none" stroke="var(--r${i+1})" stroke-width="13" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 80 80)" ${p===0?'opacity="0"':''}/>`;
+  }).join('')}</svg>`;
+}
+function renderStats(){
+  const el = document.getElementById('stats');
+  const legend = [['daily','Today'],['weekly','This week'],['monthly','This month']].map(([f,l],i)=>{
+    const g = groupProgress(f);
+    return `<div><span class="dot" style="background:var(--r${i+1})"></span><span>${l}<small>${g.total ? `${g.done} of ${g.total}` : 'none set'}</small></span><b>${g.pct===null?'—':Math.round(g.pct*100)+'%'}</b></div>`;
+  }).join('');
+  const today = sod(new Date());
+  const days = Array.from({length:14}, (_,i) => addDays(today, i-13));
+  const bars = days.map((d,i) => { const p = dayPct(d); return `<div class="${i===13?'today':''}" title="${fmtDate(d)}: ${p===null?'no chores':Math.round(p*100)+'%'}"><i style="height:${p===null?0:Math.max(4,p*100)}%"></i></div>`; }).join('');
+  let perfect = 0; for (let i = 0; i < 30; i++) if (dayPct(addDays(today,-i)) === 1) perfect++;
+  const [wa,wb] = range('weekly'); const weekDone = state.log.filter(e => e.t >= wa && e.t < wb).length;
+  el.innerHTML = `<div class="rings">${ringSVG()}<div class="legend">${legend}</div></div>
+    <div class="tiles"><div class="tile"><b>${seasonPoints()}</b><span>points this ${SEASONS[seasonOf(new Date())].name.toLowerCase()}</span></div><div class="tile"><b>${weekDone}</b><span>chores done this week</span></div><div class="tile"><b>${perfect}</b><span>perfect days, last 30</span></div></div>
+    <div class="hist"><h3>Daily chores, last 14 days</h3><div class="bars">${bars}</div><div class="lbl"><span>${fmtDate(days[0])}</span><span>Today</span></div></div>`;
+  requestAnimationFrame(() => requestAnimationFrame(() => el.querySelectorAll('.ring-fg').forEach(c => c.setAttribute('stroke-dashoffset', c.dataset.c * (1 - c.dataset.p)))));
+}
+
+function renderView(){
+  const v = state.settings.view;
+  document.getElementById('cozyView').hidden = v !== 'cozy';
+  document.getElementById('stats').hidden = v !== 'stats';
+  document.getElementById('vCozy').setAttribute('aria-pressed', v === 'cozy');
+  document.getElementById('vStats').setAttribute('aria-pressed', v === 'stats');
+}
+
+function render(){
+  renderHeader(); renderView();
+  updateScene(); renderCozyFoot();
+  if (state.settings.view === 'stats') renderStats();
+  renderLists();
+}
+
+/* ---------- actions ---------- */
+let toastTimer;
+function toast(msg, undo){
+  const t = document.getElementById('toast'), u = document.getElementById('toastUndo');
+  document.getElementById('toastMsg').textContent = msg;
+  u.hidden = !undo; u.onclick = () => { undo(); t.classList.remove('show'); };
+  t.classList.add('show'); clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), undo ? 4500 : 3000);
+}
+function addEntry(c, t = Date.now(), pts = PTS[c.freq]){
+  const before = unlockedCount(), dBefore = groupProgress('daily');
+  const e = {id:uid(), choreId:c.id, t, pts};
+  state.log.push(e); save(); render();
+  const after = unlockedCount(), dAfter = groupProgress('daily');
+  const undo = () => removeEntry(e);
+  if (after > before){
+    const sn = viewSeason();
+    toast(`New for your porch: ${ITEMS[sn][SLOTS[after-1]][0].toLowerCase()}!`, undo);
+    if (state.settings.view !== 'cozy'){ state.settings.view = 'cozy'; save(); render(); }
+  } else if (c.freq === 'daily' && dAfter.total && dAfter.done >= dAfter.total && dBefore.done < dBefore.total){
+    toast('All of today’s chores done. Enjoy your cozy evening.', undo);
+  } else toast(`${c.name} done · +${pts} pts`, undo);
+  if (navigator.vibrate) try { navigator.vibrate(12); } catch(e){}
+  return e;
+}
+function removeEntry(e){ state.log = state.log.filter(x => x.id !== e.id); save(); render(); }
+function tapChore(id){
+  const c = find(id); if (!c) return;
+  const es = entries(c, range(c.freq === 'loose' ? 'daily' : c.freq));
+  const full = c.freq === 'loose' ? es.length > 0 : es.length >= c.target;
+  if (full){
+    const last = es.reduce((a,b) => b.t > a.t ? b : a);
+    removeEntry(last);
+    toast(`Unchecked ${c.name}`, () => { state.log.push(last); save(); render(); });
+  } else addEntry(c);
+}
+
+/* ---------- sheets ---------- */
+const wrap = document.getElementById('sheetWrap'), sheet = document.getElementById('sheet');
+function openSheet(html){ sheet.innerHTML = `<div class="grip"></div>${html}`; wrap.hidden = false; }
+function closeSheet(){ wrap.hidden = true; sheet.innerHTML = ''; }
+document.getElementById('backdrop').onclick = closeSheet;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !wrap.hidden) closeSheet(); });
+
+function editChore(id){
+  const c = id ? find(id) : null;
+  const f = {name: c ? c.name : '', emoji: c ? c.emoji : '', freq: c ? c.freq : 'daily', target: c ? c.target : 1};
+  const ld = c ? lastDone(c) : null;
+  openSheet(`<h2>${c ? 'Edit chore' : 'New chore'}</h2>
+    <div class="field"><label for="fName">Chore</label><input type="text" id="fName" maxlength="60" placeholder="e.g. Wipe the counters" value="${esc(f.name)}" autocomplete="off"></div>
+    <div class="field"><div class="lbl">How often</div><div class="seg" id="fFreq">${FREQS.map(x=>`<button type="button" data-v="${x}" aria-pressed="${x===f.freq}">${FREQ_LABEL[x]}</button>`).join('')}</div>
+      <div class="hint" id="fFreqHint"></div></div>
+    <div class="field" id="fTargetWrap"><div class="lbl" id="fTargetLbl">Times</div><div class="stepper"><button type="button" id="tMinus" aria-label="Fewer">−</button><output id="fTarget">${f.target}</output><button type="button" id="tPlus" aria-label="More">+</button></div></div>
+    <div class="field" id="fLastWrap"><label for="fLast">Last done</label><input type="date" id="fLast" value="${ld ? dateKey(new Date(ld)) : ''}" max="${dateKey(new Date())}"><div class="hint">Optional. Set this if you remember roughly when you last did it.</div></div>
+    <div class="field"><div class="lbl">Icon</div><div class="emojis" id="fEmoji"><button type="button" data-v="" aria-pressed="${!f.emoji}" style="font-size:13px;color:var(--muted)">none</button>${EMOJIS.map(x=>`<button type="button" data-v="${x}" aria-pressed="${x===f.emoji}">${x}</button>`).join('')}</div></div>
+    <div class="actions">${c ? `<button class="btn danger" id="fDel">Delete</button>` : ''}<button class="btn" id="fCancel">Cancel</button><button class="btn primary" id="fSave">${c ? 'Save' : 'Add chore'}</button></div>`);
+  const $ = s => sheet.querySelector(s);
+  const sync = () => {
+    $('#fFreq').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === f.freq));
+    $('#fTargetWrap').hidden = f.freq === 'loose';
+    $('#fLastWrap').hidden = f.freq !== 'loose';
+    $('#fTargetLbl').textContent = `Times ${PERIOD_WORD[f.freq] || ''}`;
+    $('#fTarget').textContent = f.target;
+    $('#fFreqHint').textContent = f.freq === 'loose' ? 'No schedule. The app just keeps track of when you last did it.' : `Worth ${PTS[f.freq]} cozy points each time.`;
+  };
+  sync();
+  $('#fFreq').onclick = e => { const b = e.target.closest('button'); if (b){ f.freq = b.dataset.v; sync(); } };
+  $('#tMinus').onclick = () => { f.target = Math.max(1, f.target-1); sync(); };
+  $('#tPlus').onclick = () => { f.target = Math.min(14, f.target+1); sync(); };
+  $('#fEmoji').onclick = e => { const b = e.target.closest('button'); if (!b) return; f.emoji = b.dataset.v; $('#fEmoji').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); };
+  $('#fCancel').onclick = closeSheet;
+  $('#fSave').onclick = () => {
+    const name = $('#fName').value.trim();
+    if (!name){ $('#fName').focus(); $('#fName').style.borderColor = 'var(--accent)'; return; }
+    let target = f.freq === 'loose' ? 1 : f.target;
+    let ch = c;
+    if (ch){ Object.assign(ch, {name, emoji:f.emoji, freq:f.freq, target}); }
+    else { ch = {id:uid(), name, emoji:f.emoji, freq:f.freq, target, created:Date.now(), archived:null}; state.chores.push(ch); }
+    const lv = $('#fLast').value;
+    if (f.freq === 'loose' && lv && lv !== (ld ? dateKey(new Date(ld)) : '')){
+      const [y,m,d] = lv.split('-').map(Number);
+      const t = new Date(y, m-1, d, 12).getTime();
+      if (!ld || t > ld) state.log.push({id:uid(), choreId:ch.id, t: Math.min(t, Date.now()), pts:0, backfill:true});
+      else { state.log = state.log.filter(e => !(e.choreId === ch.id && e.backfill && e.t > t)); state.log.push({id:uid(), choreId:ch.id, t, pts:0, backfill:true}); }
+    }
+    save(); closeSheet(); render(); toast(c ? 'Saved' : `Added ${name}`);
+  };
+  if (c) $('#fDel').onclick = () => {
+    c.archived = Date.now(); save(); closeSheet(); render();
+    toast(`Deleted ${c.name}`, () => { c.archived = null; save(); render(); });
+  };
+  if (!c) setTimeout(() => $('#fName') && $('#fName').focus(), 250);
+}
+
+function openSettings(){
+  const s = state.settings, auto = SEASONS[seasonOf(new Date())].name;
+  openSheet(`<h2>Settings</h2>
+    <div class="field"><div class="lbl">Season look</div><div class="seg" id="sSeason">${[['auto',`Automatic (${auto})`],['winter','Winter'],['spring','Spring'],['summer','Summer'],['fall','Fall']].map(([v,l])=>`<button type="button" data-v="${v}" aria-pressed="${s.season===v}">${l}</button>`).join('')}</div>
+      <div class="hint">Automatic changes on Dec 1, Mar 1, Jun 1 and Sep 1. Each season starts a fresh porch to decorate. Points always count toward the real season.</div></div>
+    <div class="field"><div class="lbl">Week starts on</div><div class="seg" id="sWeek"><button type="button" data-v="0" aria-pressed="${s.weekStart===0}">Sunday</button><button type="button" data-v="1" aria-pressed="${s.weekStart===1}">Monday</button></div></div>
+    <div class="field"><div class="lbl">Backup</div><div class="set-row">
+      <button class="btn" id="sExport">Save a backup file</button>
+      <button class="btn" id="sImport">Restore from a backup file</button>
+      <input type="file" id="sFile" accept="application/json,.json" hidden>
+    </div><div class="hint">Your chores live only on this phone. Save a backup now and then (to Files or iCloud Drive) so they're safe.</div></div>
+    <div class="set-row"><button class="btn danger" id="sReset" style="text-align:left">Erase everything and start over</button></div>
+    <div class="actions"><button class="btn primary" id="sDone">Done</button></div>`);
+  const $ = q => sheet.querySelector(q);
+  $('#sSeason').onclick = e => { const b = e.target.closest('button'); if (!b) return; s.season = b.dataset.v; save(); render(); $('#sSeason').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); };
+  $('#sWeek').onclick = e => { const b = e.target.closest('button'); if (!b) return; s.weekStart = +b.dataset.v; save(); render(); $('#sWeek').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); };
+  $('#sExport').onclick = exportBackup;
+  $('#sImport').onclick = () => $('#sFile').click();
+  $('#sFile').onchange = async e => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      const s2 = normalize(JSON.parse(await file.text()));
+      if (!s2) throw new Error('bad');
+      if (!confirm(`Replace everything with this backup (${s2.chores.filter(c=>!c.archived).length} chores)?`)) return;
+      state = s2; save(); closeSheet(); buildScene(); render(); toast('Backup restored');
+    } catch(err){ toast("That file doesn't look like a Cozy Chores backup"); }
+  };
+  $('#sReset').onclick = () => {
+    if (!confirm('Erase all chores and history? This can’t be undone (unless you saved a backup).')) return;
+    state = seed(); state.chores = []; save(); closeSheet(); buildScene(); render(); toast('Fresh start');
+  };
+  $('#sDone').onclick = closeSheet;
+}
+async function exportBackup(){
+  const name = `cozy-chores-backup-${dateKey(new Date())}.json`;
+  const blob = new Blob([JSON.stringify(state)], {type:'application/json'});
+  try {
+    const file = new File([blob], name, {type:'application/json'});
+    if (navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:'Cozy Chores backup'}); return; }
+  } catch(e){ if (e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ---------- wiring ---------- */
+document.getElementById('lists').addEventListener('click', e => {
+  const ed = e.target.closest('[data-edit]'); if (ed){ editChore(ed.dataset.edit); return; }
+  const row = e.target.closest('.row'); if (row) tapChore(row.dataset.id);
+});
+document.getElementById('addBtn').onclick = () => editChore(null);
+document.getElementById('settingsBtn').onclick = openSettings;
+document.getElementById('vCozy').onclick = () => { state.settings.view = 'cozy'; save(); render(); };
+document.getElementById('vStats').onclick = () => { state.settings.view = 'stats'; save(); render(); };
+
+let lastDay = dateKey(new Date()), lastHour = new Date().getHours();
+function tick(){ const now = new Date(); if (dateKey(now) !== lastDay || now.getHours() !== lastHour){ lastDay = dateKey(now); lastHour = now.getHours(); render(); } }
+setInterval(tick, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+
+buildScene(); render();
+if (state.seeded){ delete state.seeded; save(); setTimeout(() => toast('Starter chores added. Tap ⋯ on any chore to edit or delete it.'), 600); }
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
