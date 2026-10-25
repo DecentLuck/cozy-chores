@@ -92,7 +92,7 @@ ul.list{list-style:none;margin:0;padding:0}
 .row{display:flex;align-items:center;gap:12px;padding:10px 6px 10px 14px;cursor:pointer;user-select:none;-webkit-user-select:none;transition:background .2s}
 .row + .row{border-top:1px solid var(--line)}
 .row:active{background:var(--soft)}
-.check{color:var(--accent-ink);width:30px;height:30px;border-radius:50%;border:2.5px solid var(--line);flex:none;display:grid;place-items:center;transition:background .25s,border-color .25s,transform .25s;background:transparent}
+.check{color:var(--accent-ink);width:30px;height:30px;border-radius:50%;border:2.5px solid var(--line);flex:none;display:grid;place-items:center;transition:background .25s,border-color .25s,transform .25s;background:transparent;padding:0;cursor:pointer}
 .check svg{width:16px;height:16px;opacity:0;transform:scale(.5);transition:opacity .2s,transform .25s cubic-bezier(.3,1.6,.5,1)}
 .row.done .check{background:var(--accent);border-color:var(--accent)}
 .row.done .check svg{opacity:1;transform:none}
@@ -105,6 +105,24 @@ ul.list{list-style:none;margin:0;padding:0}
 .pips{display:inline-flex;gap:3px}
 .pips i{width:7px;height:7px;border-radius:50%;background:var(--line)}
 .pips i.on{background:var(--accent)}
+.chev{width:18px;height:18px;color:var(--muted);flex:none;transition:transform .25s}
+.row.open .chev{transform:rotate(180deg)}
+.subs{padding:0 12px 10px 54px;display:grid;gap:2px}
+.subs + .row{border-top:1px solid var(--line)}
+.sub-item{display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:7px 6px;text-align:left;font-size:14.5px;cursor:pointer;border-radius:10px;width:100%}
+.sub-item:active{background:var(--soft)}
+.mini{width:20px;height:20px;border-radius:6px;border:2px solid var(--line);display:grid;place-items:center;flex:none;color:var(--accent-ink);transition:background .2s,border-color .2s}
+.mini svg{width:12px;height:12px;opacity:0;transition:opacity .2s}
+.sub-item.on .mini{background:var(--accent);border-color:var(--accent)}
+.sub-item.on .mini svg{opacity:1}
+.sub-item.on .sname{color:var(--muted);text-decoration:line-through}
+.subbar{display:inline-block;width:34px;height:5px;border-radius:9px;background:var(--line);overflow:hidden}
+.subbar i{display:block;height:100%;background:var(--accent);border-radius:9px}
+.sub-edit{display:flex;gap:8px;margin-bottom:8px}
+.sub-edit input{flex:1;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);outline:none}
+.sub-edit input:focus{border-color:var(--accent)}
+.sub-edit button{width:42px;flex:none;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);font-size:20px;color:var(--muted);cursor:pointer}
+.btn.ghost{background:transparent;border:1.5px dashed var(--line);padding:10px;font-size:14.5px;width:100%;flex:none;color:var(--muted)}
 .more{border:0;background:transparent;width:38px;height:38px;border-radius:50%;color:var(--muted);cursor:pointer;flex:none;display:grid;place-items:center}
 .more:active{background:var(--soft)}
 .more svg{width:20px;height:20px}
@@ -270,16 +288,17 @@ function agoText(t){
 const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
 function seed(){
   const t = sod(new Date()).getTime();
-  const mk = (name, emoji, freq, target=1) => ({id:uid(), name, emoji, freq, target, created:t, archived:null});
+  const mk = (name, emoji, freq, target=1, subs=[]) => ({id:uid(), name, emoji, freq, target, created:t, archived:null, subtasks:subs.map(n => ({id:uid(), name:n}))});
   return {
     version:1,
     chores:[
       mk('Make the bed','🛏️','daily'), mk('Dishes','🍽️','daily'), mk('10-minute tidy','✨','daily'),
       mk('Laundry','🧺','weekly'), mk('Vacuum','🧹','weekly'), mk('Water the plants','🪴','weekly',2), mk('Take out the trash','🗑️','weekly'),
-      mk('Clean out the fridge','🧊','monthly'), mk('Dust the shelves','🧽','monthly'),
-      mk('Litter box','🐾','loose'), mk('Spring cleaning','🌸','loose'), mk('Clean the oven','🍳','loose'), mk('Wash the windows','🪟','loose'),
+      mk('Clean out the fridge','🧊','monthly',1,['Toss old food','Wipe the shelves','Wipe the drawers']), mk('Dust the shelves','🧽','monthly'),
+      mk('Litter box','🐾','loose'), mk('Spring cleaning','🌸','loose',1,['Wash the windows','Wipe the baseboards','Sort the closets','Clean under the furniture']), mk('Clean the oven','🍳','loose'), mk('Wash the windows','🪟','loose'),
     ],
     log:[],
+    subChecks:{},
     settings:{season:'auto', weekStart:1, view:'cozy'},
     seeded:true,
   };
@@ -287,7 +306,8 @@ function seed(){
 function normalize(s){
   if (!s || !Array.isArray(s.chores) || !Array.isArray(s.log)) return null;
   s.settings = Object.assign({season:'auto', weekStart:1, view:'cozy'}, s.settings || {});
-  s.chores.forEach(c => { c.target = Math.max(1, c.target|0 || 1); if (!FREQS.includes(c.freq)) c.freq = 'daily'; });
+  s.chores.forEach(c => { c.target = Math.max(1, c.target|0 || 1); if (!FREQS.includes(c.freq)) c.freq = 'daily'; if (!Array.isArray(c.subtasks)) c.subtasks = []; });
+  if (!s.subChecks || typeof s.subChecks !== 'object') s.subChecks = {};
   return s;
 }
 function load(){ try { const s = normalize(JSON.parse(localStorage.getItem(KEY))); if (s) return s; } catch(e){} return seed(); }
@@ -553,9 +573,51 @@ function updateScene(){
   document.getElementById('glow').setAttribute('opacity', (0.15 + 0.75*p).toFixed(2));
 }
 
+/* ---------- subtasks ----------
+   Subtask checks belong to one "round" of a chore: the current day/week/month (and which
+   repeat within it), or for now-and-then chores, everything since it was last done. */
+function roundKey(c){
+  if (c.freq === 'loose') return 'L' + (lastDone(c) || 0);
+  return range(c.freq)[0] + '#' + countNow(c);
+}
+function isFull(c){
+  if (c.freq === 'loose'){ const t = lastDone(c); return t !== null && daysAgo(t) <= 0; }
+  return countNow(c) >= c.target;
+}
+function subDone(c){
+  if (isFull(c)) return c.subtasks.map(x => x.id);
+  const m = state.subChecks[c.id];
+  return m && m.round === roundKey(c) ? m.done.filter(id => c.subtasks.some(x => x.id === id)) : [];
+}
+function toggleSub(id, sid){
+  const c = find(id); if (!c) return;
+  if (isFull(c)){
+    // Unchecking a step of a finished chore reopens it with the other steps still checked.
+    const es = entries(c, range(c.freq === 'loose' ? 'daily' : c.freq));
+    const last = es.reduce((a,b) => b.t > a.t ? b : a);
+    state.log = state.log.filter(x => x.id !== last.id);
+    state.subChecks[c.id] = {round: roundKey(c), done: c.subtasks.map(x => x.id).filter(x => x !== sid)};
+    save(); render(); toast(`Reopened ${c.name}`);
+    return;
+  }
+  const done = subDone(c), i = done.indexOf(sid);
+  if (i >= 0) done.splice(i, 1); else done.push(sid);
+  const round = roundKey(c);
+  if (c.subtasks.every(x => done.includes(x.id))){
+    delete state.subChecks[c.id];
+    const prev = done.filter(x => x !== sid);
+    addEntry(c, Date.now(), PTS[c.freq], () => { state.subChecks[c.id] = {round, done: prev}; save(); render(); });
+  } else {
+    state.subChecks[c.id] = {round, done};
+    save(); render();
+  }
+}
+const expanded = new Set();
+
 /* ---------- rendering ---------- */
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+const CHEV = `<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`;
 const DOTS = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>`;
 
 function rowHTML(c){
@@ -575,14 +637,21 @@ function rowHTML(c){
       const t = es[es.length-1].t;
       sub = c.freq === 'daily' ? 'Done' : c.freq === 'weekly' ? `Done ${fmtDay(t)}` : `Done ${fmtDate(t)}`;
     } else {
-      sub = `+${PTS[c.freq]} cozy points`;
+      sub = c.subtasks.length ? '' : `+${PTS[c.freq]} cozy points`;
     }
   }
-  return `<li class="row ${cls}" data-id="${c.id}">
-    <span class="check">${CHECK}</span>
+  const subs = c.subtasks, open = subs.length && expanded.has(c.id);
+  if (subs.length && cls !== 'done'){
+    const d = subDone(c).length;
+    sub += `${sub ? ' · ' : ''}<span class="subbar"><i style="width:${d/subs.length*100}%"></i></span> ${d} of ${subs.length} subtasks`;
+  }
+  const doneIds = subs.length ? subDone(c) : [];
+  return `<li class="row ${cls}${open ? ' open' : ''}" data-id="${c.id}">
+    <button class="check" data-check="${c.id}" aria-label="${cls === 'done' ? 'Uncheck' : 'Mark done:'} ${esc(c.name)}">${CHECK}</button>
     <div class="info"><div class="name">${c.emoji ? `<span class="em">${esc(c.emoji)}</span>` : ''}${esc(c.name)}</div><div class="sub">${sub}</div></div>
+    ${subs.length ? CHEV : ''}
     <button class="more" data-edit="${c.id}" aria-label="Edit ${esc(c.name)}">${DOTS}</button>
-  </li>`;
+  </li>${open ? `<li class="subs">${subs.map(x => `<button class="sub-item${doneIds.includes(x.id) ? ' on' : ''}" data-sub="${c.id}" data-sid="${x.id}"><span class="mini">${CHECK}</span><span class="sname">${esc(x.name)}</span></button>`).join('')}</li>` : ''}`;
 }
 
 function renderLists(){
@@ -678,12 +747,12 @@ function toast(msg, undo){
   t.classList.add('show'); clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), undo ? 4500 : 3000);
 }
-function addEntry(c, t = Date.now(), pts = PTS[c.freq]){
+function addEntry(c, t = Date.now(), pts = PTS[c.freq], afterUndo){
   const before = unlockedCount(), dBefore = groupProgress('daily');
   const e = {id:uid(), choreId:c.id, t, pts};
   state.log.push(e); save(); render();
   const after = unlockedCount(), dAfter = groupProgress('daily');
-  const undo = () => removeEntry(e);
+  const undo = () => { removeEntry(e); if (afterUndo) afterUndo(); };
   if (after > before){
     const sn = viewSeason();
     toast(`New for your porch: ${ITEMS[sn][SLOTS[after-1]][0].toLowerCase()}!`, undo);
@@ -701,6 +770,7 @@ function tapChore(id){
   const full = c.freq === 'loose' ? es.length > 0 : es.length >= c.target;
   if (full){
     const last = es.reduce((a,b) => b.t > a.t ? b : a);
+    delete state.subChecks[c.id];
     removeEntry(last);
     toast(`Unchecked ${c.name}`, () => { state.log.push(last); save(); render(); });
   } else addEntry(c);
@@ -715,10 +785,11 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !wrap.hidd
 
 function editChore(id){
   const c = id ? find(id) : null;
-  const f = {name: c ? c.name : '', emoji: c ? c.emoji : '', freq: c ? c.freq : 'daily', target: c ? c.target : 1};
+  const f = {name: c ? c.name : '', emoji: c ? c.emoji : '', freq: c ? c.freq : 'daily', target: c ? c.target : 1, subs: c ? c.subtasks.map(x => ({...x})) : []};
   const ld = c ? lastDone(c) : null;
   openSheet(`<h2>${c ? 'Edit chore' : 'New chore'}</h2>
     <div class="field"><label for="fName">Chore</label><input type="text" id="fName" maxlength="60" placeholder="e.g. Wipe the counters" value="${esc(f.name)}" autocomplete="off"></div>
+    <div class="field"><div class="lbl">Subtasks <span style="font-weight:500">(optional)</span></div><div id="fSubs"></div><button type="button" class="btn ghost" id="fAddSub">+ Add a subtask</button><div class="hint">Check them off one at a time. When they're all done, the chore is done.</div></div>
     <div class="field"><div class="lbl">How often</div><div class="seg" id="fFreq">${FREQS.map(x=>`<button type="button" data-v="${x}" aria-pressed="${x===f.freq}">${FREQ_LABEL[x]}</button>`).join('')}</div>
       <div class="hint" id="fFreqHint"></div></div>
     <div class="field" id="fTargetWrap"><div class="lbl" id="fTargetLbl">Times</div><div class="stepper"><button type="button" id="tMinus" aria-label="Fewer">−</button><output id="fTarget">${f.target}</output><button type="button" id="tPlus" aria-label="More">+</button></div></div>
@@ -735,6 +806,15 @@ function editChore(id){
     $('#fFreqHint').textContent = f.freq === 'loose' ? 'No schedule. The app just keeps track of when you last did it.' : `Worth ${PTS[f.freq]} cozy points each time.`;
   };
   sync();
+  const drawSubs = () => {
+    $('#fSubs').innerHTML = f.subs.map((x,i) => `<div class="sub-edit"><input type="text" data-i="${i}" value="${esc(x.name)}" placeholder="Subtask ${i+1}" maxlength="60" autocomplete="off"><button type="button" data-del="${i}" aria-label="Remove subtask">×</button></div>`).join('');
+  };
+  const addSub = () => { f.subs.push({id:uid(), name:''}); drawSubs(); const ins = $('#fSubs').querySelectorAll('input'); ins[ins.length-1].focus(); };
+  drawSubs();
+  $('#fAddSub').onclick = addSub;
+  $('#fSubs').oninput = e => { const i = e.target.dataset.i; if (i !== undefined) f.subs[i].name = e.target.value; };
+  $('#fSubs').onkeydown = e => { if (e.key === 'Enter' && e.target.dataset.i !== undefined){ e.preventDefault(); addSub(); } };
+  $('#fSubs').onclick = e => { const b = e.target.closest('[data-del]'); if (b){ f.subs.splice(+b.dataset.del, 1); drawSubs(); } };
   $('#fFreq').onclick = e => { const b = e.target.closest('button'); if (b){ f.freq = b.dataset.v; sync(); } };
   $('#tMinus').onclick = () => { f.target = Math.max(1, f.target-1); sync(); };
   $('#tPlus').onclick = () => { f.target = Math.min(14, f.target+1); sync(); };
@@ -744,9 +824,11 @@ function editChore(id){
     const name = $('#fName').value.trim();
     if (!name){ $('#fName').focus(); $('#fName').style.borderColor = 'var(--accent)'; return; }
     let target = f.freq === 'loose' ? 1 : f.target;
+    const subtasks = f.subs.map(x => ({id:x.id, name:x.name.trim()})).filter(x => x.name);
     let ch = c;
-    if (ch){ Object.assign(ch, {name, emoji:f.emoji, freq:f.freq, target}); }
-    else { ch = {id:uid(), name, emoji:f.emoji, freq:f.freq, target, created:Date.now(), archived:null}; state.chores.push(ch); }
+    if (ch){ Object.assign(ch, {name, emoji:f.emoji, freq:f.freq, target, subtasks}); }
+    else { ch = {id:uid(), name, emoji:f.emoji, freq:f.freq, target, created:Date.now(), archived:null, subtasks}; state.chores.push(ch); }
+    if (subtasks.length) expanded.add(ch.id);
     const lv = $('#fLast').value;
     if (f.freq === 'loose' && lv && lv !== (ld ? dateKey(new Date(ld)) : '')){
       const [y,m,d] = lv.split('-').map(Number);
@@ -773,7 +855,7 @@ function openSettings(){
       <button class="btn" id="sExport">Save a backup file</button>
       <button class="btn" id="sImport">Restore from a backup file</button>
       <input type="file" id="sFile" accept="application/json,.json" hidden>
-    </div><div class="hint">Your chores live only on this phone. Save a backup now and then (to Files or iCloud Drive) so they're safe.</div></div>
+    </div><div class="hint">Your chores live only on this phone. Save a backup now and then (to Google Drive or Files) so they're safe.</div></div>
     <div class="set-row"><button class="btn danger" id="sReset" style="text-align:left">Erase everything and start over</button></div>
     <div class="actions"><button class="btn primary" id="sDone">Done</button></div>`);
   const $ = q => sheet.querySelector(q);
@@ -810,7 +892,13 @@ async function exportBackup(){
 /* ---------- wiring ---------- */
 document.getElementById('lists').addEventListener('click', e => {
   const ed = e.target.closest('[data-edit]'); if (ed){ editChore(ed.dataset.edit); return; }
-  const row = e.target.closest('.row'); if (row) tapChore(row.dataset.id);
+  const sb = e.target.closest('[data-sub]'); if (sb){ toggleSub(sb.dataset.sub, sb.dataset.sid); return; }
+  const ck = e.target.closest('[data-check]'); if (ck){ tapChore(ck.dataset.check); return; }
+  const row = e.target.closest('.row'); if (!row) return;
+  const c = find(row.dataset.id);
+  // Chores with subtasks open their checklist; others check off with a tap anywhere.
+  if (c && c.subtasks.length){ expanded.has(c.id) ? expanded.delete(c.id) : expanded.add(c.id); renderLists(); }
+  else tapChore(row.dataset.id);
 });
 document.getElementById('addBtn').onclick = () => editChore(null);
 document.getElementById('settingsBtn').onclick = openSettings;
