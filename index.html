@@ -101,7 +101,7 @@ ul.list{list-style:none;margin:0;padding:0}
 .info{flex:1;min-width:0}
 .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .name .em{margin-right:6px}
-.sub{font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.sub{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 6px;align-items:center}
 .pips{display:inline-flex;gap:3px}
 .pips i{width:7px;height:7px;border-radius:50%;background:var(--line)}
 .pips i.on{background:var(--accent)}
@@ -131,6 +131,19 @@ ul.list{list-style:none;margin:0;padding:0}
 
 .fab{position:fixed;right:max(18px,calc(50% - 242px));bottom:calc(22px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);box-shadow:0 8px 24px rgba(0,0,0,.45),0 0 24px color-mix(in srgb, var(--accent) 35%, transparent);cursor:pointer;display:grid;place-items:center;z-index:5}
 .fab svg{width:26px;height:26px}
+
+/* overdue */
+:root{--crit:#f0604f}
+.row.overdue{background:color-mix(in srgb,var(--crit) 17%,transparent);box-shadow:inset 4px 0 0 var(--crit)}
+.row.overdue .check{border-color:var(--crit)}
+.row.overdue .sub{color:#ffb3a8}
+.crit-tag{background:var(--crit);color:#2a0d09;font-weight:800;font-size:11px;letter-spacing:.03em;text-transform:uppercase;padding:1px 7px;border-radius:99px}
+.chips{display:flex;gap:6px}
+.subprog{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.subprog.own{width:100%}
+.row.overdue .subbar{background:rgba(255,255,255,.22)}
+.row.overdue .subbar i{background:var(--crit)}
+.chip.crit{background:var(--crit);color:#2a0d09}
 
 /* sheets */
 .sheet-wrap{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center}
@@ -613,6 +626,16 @@ function toggleSub(id, sid){
   }
 }
 const expanded = new Set();
+// Overdue: a weekly chore not done for more than 7 days, or a monthly one for more than a calendar month.
+// A chore that has never been logged counts from the day it was added.
+function isOverdue(c){
+  if ((c.freq !== 'weekly' && c.freq !== 'monthly') || isFull(c)) return false;
+  const base = sod(lastDone(c) ?? c.created);
+  if (c.freq === 'weekly') return daysAgo(base) > 7;
+  const y = base.getFullYear(), m = base.getMonth() + 1;
+  const due = new Date(y, m, Math.min(base.getDate(), new Date(y, m + 1, 0).getDate()));
+  return sod(new Date()) > due;
+}
 
 /* ---------- rendering ---------- */
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -633,17 +656,22 @@ function rowHTML(c){
     if (n >= c.target) cls = 'done'; else if (n > 0) cls = 'partial';
     if (c.target > 1){
       sub = `<span class="pips">${Array.from({length:c.target},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span> ${Math.min(n,c.target)} of ${c.target} ${PERIOD_WORD[c.freq]}`;
+      if (c.freq !== 'daily' && lastDone(c) !== null) sub += ` · last ${fmtDate(lastDone(c))}`;
     } else if (n){
       const t = es[es.length-1].t;
       sub = c.freq === 'daily' ? 'Done' : c.freq === 'weekly' ? `Done ${fmtDay(t)}` : `Done ${fmtDate(t)}`;
     } else {
-      sub = c.subtasks.length ? '' : `+${PTS[c.freq]} cozy points`;
+      const t = lastDone(c);
+      if (c.freq === 'daily') sub = c.subtasks.length ? '' : `+${PTS[c.freq]} cozy points`;
+      else sub = t === null ? 'Not logged yet' : `Last done ${agoText(t).toLowerCase()} · ${fmtDate(t)}`;
     }
+    if (isOverdue(c)){ cls += ' overdue'; sub = `<span class="crit-tag">Needs attention</span> ${sub}`; }
   }
   const subs = c.subtasks, open = subs.length && expanded.has(c.id);
   if (subs.length && cls !== 'done'){
     const d = subDone(c).length;
-    sub += `${sub ? ' · ' : ''}<span class="subbar"><i style="width:${d/subs.length*100}%"></i></span> ${d} of ${subs.length} subtasks`;
+    const own = c.freq === 'weekly' || c.freq === 'monthly';
+    sub += `${sub && !own ? ' · ' : ''}<span class="subprog${own ? ' own' : ''}"><span class="subbar"><i style="width:${d/subs.length*100}%"></i></span> ${d} of ${subs.length} subtasks</span>`;
   }
   const doneIds = subs.length ? subDone(c) : [];
   return `<li class="row ${cls}${open ? ' open' : ''}" data-id="${c.id}">
@@ -671,6 +699,12 @@ function renderLists(){
     } else {
       const g = groupProgress(f);
       chip = `<span class="chip ${g.done >= g.total ? 'full' : ''}">${Math.round(g.pct*100)}%</span>`;
+      const late = cs.filter(isOverdue);
+      if (late.length){
+        const when = c => lastDone(c) ?? c.created;
+        cs = [...late.sort((a,b) => when(a) - when(b)), ...cs.filter(c => !isOverdue(c))];
+        chip = `<span class="chips"><span class="chip crit">${late.length} need${late.length === 1 ? 's' : ''} attention</span>${chip}</span>`;
+      }
     }
     html += `<section class="group"><div class="ghead"><h2>${GROUP_TITLE[f]}</h2>${chip}</div><ul class="list card">${cs.map(rowHTML).join('')}</ul></section>`;
   }
@@ -800,7 +834,7 @@ function editChore(id){
   const sync = () => {
     $('#fFreq').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === f.freq));
     $('#fTargetWrap').hidden = f.freq === 'loose';
-    $('#fLastWrap').hidden = f.freq !== 'loose';
+    $('#fLastWrap').hidden = f.freq === 'daily';
     $('#fTargetLbl').textContent = `Times ${PERIOD_WORD[f.freq] || ''}`;
     $('#fTarget').textContent = f.target;
     $('#fFreqHint').textContent = f.freq === 'loose' ? 'No schedule. The app just keeps track of when you last did it.' : `Worth ${PTS[f.freq]} cozy points each time.`;
@@ -830,7 +864,7 @@ function editChore(id){
     else { ch = {id:uid(), name, emoji:f.emoji, freq:f.freq, target, created:Date.now(), archived:null, subtasks}; state.chores.push(ch); }
     if (subtasks.length) expanded.add(ch.id);
     const lv = $('#fLast').value;
-    if (f.freq === 'loose' && lv && lv !== (ld ? dateKey(new Date(ld)) : '')){
+    if (f.freq !== 'daily' && lv && lv !== (ld ? dateKey(new Date(ld)) : '')){
       const [y,m,d] = lv.split('-').map(Number);
       const t = new Date(y, m-1, d, 12).getTime();
       if (!ld || t > ld) state.log.push({id:uid(), choreId:ch.id, t: Math.min(t, Date.now()), pts:0, backfill:true});
