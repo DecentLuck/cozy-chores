@@ -145,6 +145,12 @@ ul.list{list-style:none;margin:0;padding:0}
 .row.overdue .subbar i{background:var(--crit)}
 .chip.crit{background:var(--crit);color:#2a0d09}
 
+/* what's new */
+.news{margin:0 0 18px;padding:0;list-style:none;display:grid;gap:12px}
+.news li{display:flex;gap:10px;font-size:15px}
+.news .em{flex:none;font-size:18px;line-height:1.3}
+.ver{text-align:center;font-size:12px;color:var(--muted);margin-top:14px}
+
 /* sheets */
 .sheet-wrap{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .sheet-wrap[hidden]{display:none}
@@ -257,6 +263,7 @@ ul.list{list-style:none;margin:0;padding:0}
 <script>
 'use strict';
 const KEY = 'cozychores.v1';
+const APP_VERSION = '1.1';
 const DAY = 864e5;
 const PTS = {daily:5, weekly:15, monthly:30, loose:20};
 const FREQS = ['daily','weekly','monthly','loose'];
@@ -312,7 +319,7 @@ function seed(){
     ],
     log:[],
     subChecks:{},
-    settings:{season:'auto', weekStart:1, view:'cozy'},
+    settings:{season:'auto', weekStart:1, view:'cozy', seenVersion:APP_VERSION},
     seeded:true,
   };
 }
@@ -879,6 +886,20 @@ function editChore(id){
   if (!c) setTimeout(() => $('#fName') && $('#fName').focus(), 250);
 }
 
+// Shown once after an update. To announce a new version: change APP_VERSION and this list.
+function showWhatsNew(){
+  if (state.settings.seenVersion === APP_VERSION) return;
+  state.settings.seenVersion = APP_VERSION; save();
+  openSheet(`<h2>Version ${APP_VERSION} is ready</h2>
+    <ul class="news">
+      <li><span class="em">🗓️</span><span>Weekly and monthly chores now show when you last did them.</span></li>
+      <li><span class="em">❤️</span><span>Chores that have waited too long turn red with a “Needs attention” tag and move to the top.</span></li>
+      <li><span class="em">✏️</span><span>Tap ⋯ on a chore to set its “Last done” date if you remember it.</span></li>
+    </ul>
+    <div class="actions"><button class="btn primary" id="newsOk">Got it</button></div>`);
+  sheet.querySelector('#newsOk').onclick = closeSheet;
+}
+
 function openSettings(){
   const s = state.settings, auto = SEASONS[seasonOf(new Date())].name;
   openSheet(`<h2>Settings</h2>
@@ -891,7 +912,8 @@ function openSettings(){
       <input type="file" id="sFile" accept="application/json,.json" hidden>
     </div><div class="hint">Your chores live only on this phone. Save a backup now and then (to Google Drive or Files) so they're safe.</div></div>
     <div class="set-row"><button class="btn danger" id="sReset" style="text-align:left">Erase everything and start over</button></div>
-    <div class="actions"><button class="btn primary" id="sDone">Done</button></div>`);
+    <div class="actions"><button class="btn primary" id="sDone">Done</button></div>
+    <div class="ver">Cozy Chores ${APP_VERSION}</div>`);
   const $ = q => sheet.querySelector(q);
   $('#sSeason').onclick = e => { const b = e.target.closest('button'); if (!b) return; s.season = b.dataset.v; save(); render(); $('#sSeason').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); };
   $('#sWeek').onclick = e => { const b = e.target.closest('button'); if (!b) return; s.weekStart = +b.dataset.v; save(); render(); $('#sWeek').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); };
@@ -946,6 +968,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) tick
 
 buildScene(); render();
 if (state.seeded){ delete state.seeded; save(); setTimeout(() => toast('Starter chores added. Tap ⋯ on any chore to edit or delete it.'), 600); }
+showWhatsNew();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>

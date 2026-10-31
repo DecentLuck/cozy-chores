@@ -1,5 +1,5 @@
 // Keeps the app working offline. Bump the version when files change.
-const CACHE = 'cozy-chores-v4';
+const CACHE = 'cozy-chores-v5';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
